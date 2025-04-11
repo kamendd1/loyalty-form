@@ -28,6 +28,8 @@ body {
   right: 0;
   bottom: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 @media (max-width: 520px) {
@@ -45,7 +47,7 @@ body {
 
 .form-card {
   background: white;
-  width: 500px;
+  width: 349px;
   margin: 1rem;
   display: flex;
   flex-direction: column;
@@ -56,6 +58,7 @@ body {
 @media (max-width: 520px) {
   .form-card {
     width: 100%;
+    max-width: 349px;
     margin: 0;
     padding: 1rem;
     min-height: 100vh;
@@ -74,8 +77,8 @@ body {
 
 .logo {
   height: 120px;
-  width: auto;
-  max-width: 90%;
+  width: 100%;
+  max-width: 300px;
   object-fit: contain;
 }
 
