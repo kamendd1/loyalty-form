@@ -17,11 +17,11 @@ body {
 }
 
 .container {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1rem;
+  padding: 0;
   position: fixed;
   top: 0;
   left: 0;
@@ -34,7 +34,6 @@ body {
 
 @media (max-width: 520px) {
   .container {
-    padding: 0;
     position: static;
     height: 100vh;
   }
@@ -48,11 +47,11 @@ body {
 .form-card {
   background: white;
   width: 345px;
-  margin: 1rem;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 @media (max-width: 520px) {
@@ -70,21 +69,21 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 3rem;
+  margin-bottom: 1.5rem;
   width: 100%;
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 .logo {
-  height: 120px;
-  width: 100%;
-  max-width: 300px;
+  height: 80px;
+  width: auto;
+  max-width: 200px;
   object-fit: contain;
 }
 
 @media (max-width: 520px) {
   .logo {
-    height: 100px;
+    height: 60px;
   }
 }
 
@@ -103,6 +102,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-width: 345px;
 }
 
 :root {
@@ -181,13 +181,13 @@ input.error {
 /* Success Page Styles */
 .success-content {
   text-align: center;
-  padding: 1rem 0;
+  padding: 0.5rem 0;
 }
 
 .success-icon {
-  font-size: 4rem;
+  font-size: 3rem;
   color: #28a745;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .success-message {
@@ -198,7 +198,7 @@ input.error {
 }
 
 .return-button {
-  margin-top: 2rem;
+  margin-top: 1rem;
   width: 345px;
   display: inline-flex;
   height: 44px;

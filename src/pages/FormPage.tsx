@@ -62,7 +62,7 @@ const FormPage: React.FC = () => {
       <div className="form-card">
         <div className="logo-container">
           <img 
-            src="https://www.logo.wine/a/logo/E.Leclerc/E.Leclerc-Logo.wine.svg" 
+            src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" 
             alt="E.Leclerc Logo" 
             className="logo"
           />
