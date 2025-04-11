@@ -18,45 +18,47 @@ body {
 
 .container {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 0;
   box-sizing: border-box;
+  margin: 0 auto;
 }
 
 @media (max-width: 520px) {
   .container {
-    padding: 1rem;
+    padding: 0;
   }
 
   .form-card {
-    width: 100%;
-    max-width: 300px;
+    width: 349px;
     margin: 0 auto;
     padding: 1rem;
   }
 
   input, .submit-button, .return-button {
-    width: 100%;
-    max-width: 300px;
+    width: 349px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .input-help {
-    width: 100%;
-    max-width: 300px;
+    width: 349px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .success-content {
-    width: 100%;
-    max-width: 300px;
+    width: 349px;
     margin: 0 auto;
   }
 }
 
 .form-card {
   background: white;
-  width: 320px;
+  width: 349px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -66,23 +68,14 @@ body {
 }
 
 form {
-  width: 100%;
+  width: 349px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 auto;
 }
 
-@media (max-width: 520px) {
-  .form-card {
-    width: 100%;
-    max-width: 320px;
-    margin: 0 auto;
-    padding: 1rem;
-    min-height: 100vh;
-    justify-content: space-between;
-    box-sizing: border-box;
-  }
-}
+
 
 .logo-container {
   display: flex;
@@ -144,6 +137,8 @@ input {
   padding: 0 1rem;
   font-size: 1rem;
   transition: border-color 0.2s;
+  display: block;
+  margin: 0 auto;
 }
 
 input:focus {
