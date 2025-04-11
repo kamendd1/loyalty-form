@@ -57,8 +57,8 @@ const FormPage: React.FC = () => {
       <div className="form-card">
         <div className="logo-container">
           <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/9/91/Lidl-Logo.svg" 
-            alt="Lidl Logo" 
+            src="https://www.logo.wine/a/logo/E.Leclerc/E.Leclerc-Logo.wine.svg" 
+            alt="E.Leclerc Logo" 
             className="logo"
           />
         </div>
