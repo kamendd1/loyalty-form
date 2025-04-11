@@ -101,6 +101,27 @@ form {
   padding: 0.5rem;
 }
 
+.logo-link {
+  display: block;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.logo-link:hover {
+  opacity: 0.8;
+}
+
+.logo-preview {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.preview-text {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
 .logo {
   height: 160px;
   width: auto;

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const FormPage: React.FC = () => {
+  const defaultLogo = "https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw";
+  const customLogo = localStorage.getItem('customLogoUrl');
   const [loyaltyNumber, setLoyaltyNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -61,11 +63,13 @@ const FormPage: React.FC = () => {
     <div className="container">
       <div className="form-card">
         <div className="logo-container">
-          <img 
-            src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" 
-            alt="E.Leclerc Logo" 
-            className="logo"
-          />
+          <a href="/logo" className="logo-link">
+            <img 
+              src={customLogo || defaultLogo}
+              alt="Company Logo" 
+              className="logo"
+            />
+          </a>
         </div>
         
         <h1>Enjoy lower KWh price while charging at our stores!</h1>
