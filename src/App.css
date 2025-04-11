@@ -22,9 +22,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0;
+  padding: 1rem;
   box-sizing: border-box;
-  margin: 0 auto;
 }
 
 @media (max-width: 520px) {
@@ -33,32 +32,37 @@ body {
   }
 
   .form-card {
-    width: 349px;
+    width: 100%;
+    max-width: 349px;
     margin: 0 auto;
     padding: 1rem;
   }
 
   input, .submit-button, .return-button {
-    width: 349px;
+    width: 100%;
+    max-width: 349px;
     margin-left: auto;
     margin-right: auto;
   }
 
   .input-help {
-    width: 349px;
+    width: 100%;
+    max-width: 349px;
     margin-left: auto;
     margin-right: auto;
   }
 
   .success-content {
-    width: 349px;
+    width: 100%;
+    max-width: 349px;
     margin: 0 auto;
   }
 }
 
 .form-card {
   background: white;
-  width: 349px;
+  width: 100%;
+  max-width: 349px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -68,7 +72,8 @@ body {
 }
 
 form {
-  width: 349px;
+  width: 100%;
+  max-width: 349px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -128,7 +133,8 @@ h1 {
 }
 
 input {
-  width: 349px;
+  width: 100%;
+  max-width: 349px;
   height: 44px;
   flex-shrink: 0;
   border-radius: 8px;
@@ -169,7 +175,8 @@ input.error {
 }
 
 .submit-button {
-  width: 349px;
+  width: 100%;
+  max-width: 349px;
   display: inline-flex;
   height: 44px;
   padding: 6px 32px;
@@ -219,7 +226,8 @@ input.error {
 
 .return-button {
   margin-top: 1rem;
-  width: 349px;
+  width: 100%;
+  max-width: 349px;
   display: inline-flex;
   height: 44px;
   padding: 6px 32px;
