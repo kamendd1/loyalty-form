@@ -79,7 +79,6 @@ const FormPage: React.FC = () => {
               className={error ? 'error' : ''}
               maxLength={7}
               pattern="\d*"
-              placeholder="Enter your loyalty card number"
               inputMode="numeric"
             />
             <p className={`input-help ${error ? 'error-text' : ''}`}>
