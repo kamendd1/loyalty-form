@@ -34,6 +34,11 @@ const FormPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (loyaltyNumber.length === 0) {
+      setError('Please enter your loyalty card number');
+      return;
+    }
+
     if (!validateInput(loyaltyNumber)) {
       return;
     }
@@ -72,9 +77,9 @@ const FormPage: React.FC = () => {
               value={loyaltyNumber}
               onChange={handleInputChange}
               className={error ? 'error' : ''}
-              required
               maxLength={7}
               pattern="\d*"
+              placeholder="Enter your loyalty card number"
               inputMode="numeric"
             />
             <p className={`input-help ${error ? 'error-text' : ''}`}>
