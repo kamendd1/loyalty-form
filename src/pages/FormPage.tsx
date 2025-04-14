@@ -9,7 +9,7 @@ const FormPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { contextData, isLoading, error: contextError } = useEncryptedContext();
+  const { contextData, isLoading, error: contextError, isFromMobileApp } = useEncryptedContext();
 
   // Pre-fill loyalty number if provided in context
   React.useEffect(() => {
@@ -87,12 +87,12 @@ const FormPage: React.FC = () => {
     );
   }
 
-  if (contextError) {
+  if (isFromMobileApp && contextError) {
     return (
       <div className="container">
         <div className="form-card">
           <div className="error-message">
-            <p>Failed to load context. Please try again.</p>
+            <p>Failed to load context from mobile app. Please try again.</p>
             {import.meta.env.DEV && <p>{contextError}</p>}
           </div>
         </div>

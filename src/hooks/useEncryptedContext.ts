@@ -16,10 +16,15 @@ export const useEncryptedContext = () => {
   const [contextData, setContextData] = useState<FormPayload>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFromMobileApp, setIsFromMobileApp] = useState(false);
 
   useEffect(() => {
     const readEncryptedContext = () => {
       try {
+        // Check if we're being loaded from the mobile app
+        const encryptedData = document.querySelector('meta[name="encrypted-context"]')?.getAttribute('content');
+        setIsFromMobileApp(!!encryptedData);
+
         // In development, use mock data
         if (import.meta.env.DEV) {
           setContextData(DEV_MOCK_DATA);
@@ -27,19 +32,14 @@ export const useEncryptedContext = () => {
           return;
         }
 
-        // In production, read from meta tag
-        const encryptedData = document.querySelector('meta[name="encrypted-context"]')?.getAttribute('content');
-        
-        if (!encryptedData) {
-          setError('No encrypted context found');
-          return;
-        }
-
-        const decryptedData = decryptPayload(encryptedData) as FormPayload;
-        if (decryptedData) {
-          setContextData(decryptedData);
-        } else {
-          setError('Failed to decrypt context data');
+        // If we have encrypted data, try to decrypt it
+        if (encryptedData) {
+          const decryptedData = decryptPayload(encryptedData) as FormPayload;
+          if (decryptedData) {
+            setContextData(decryptedData);
+          } else {
+            setError('Failed to decrypt context data');
+          }
         }
       } catch (err) {
         setError('Error processing encrypted context');
@@ -51,6 +51,8 @@ export const useEncryptedContext = () => {
 
     readEncryptedContext();
   }, []);
+
+  return { contextData, isLoading, error, isFromMobileApp };
 
   return { contextData, isLoading, error };
 };
