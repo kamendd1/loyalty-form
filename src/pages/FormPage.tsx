@@ -87,6 +87,7 @@ const FormPage: React.FC = () => {
     );
   }
 
+  // Only show error if we're in mobile app and have an error
   if (isFromMobileApp && contextError) {
     return (
       <div className="container">
