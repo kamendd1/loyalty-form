@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEncryptedContext } from '../hooks/useEncryptedContext';
 
 const FormPage: React.FC = () => {
   const defaultLogo = "https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw";
@@ -8,6 +9,17 @@ const FormPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { contextData, isLoading, error: contextError, isFromMobileApp } = useEncryptedContext();
+
+  // Pre-fill loyalty number if provided in context
+  React.useEffect(() => {
+    if (contextData.loyaltyNumber) {
+      const number = contextData.loyaltyNumber.toString();
+      if (validateInput(number)) {
+        setLoyaltyNumber(number);
+      }
+    }
+  }, [contextData]);
 
   const validateInput = (value: string) => {
     if (!/^\d*$/.test(value)) {
@@ -52,12 +64,49 @@ const FormPage: React.FC = () => {
 
     setIsSubmitting(true);
     
-    // Simulate API call
+    // Simulate API call with context data
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Navigate to success page
-    navigate('/success');
+    // Navigate to success page with context
+    navigate('/success', { 
+      state: { 
+        loyaltyNumber,
+        ...contextData
+      }
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="container">
+        <div className="form-card">
+          <div className="loading-spinner" />
+          <p>Loading context...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show error if we're in mobile app and have an error
+  if (isFromMobileApp && contextError) {
+    return (
+      <div className="container">
+        <div className="form-card">
+          <div className="error-message">
+            <p>Failed to load context from mobile app. Please try again.</p>
+            <details>
+              <summary>Debug Information</summary>
+              <p>Error: {contextError}</p>
+              <p>Meta tag present: {document.querySelector('meta[name="encrypted-context"]') ? 'Yes' : 'No'}</p>
+              <p>Meta tag content: {document.querySelector('meta[name="encrypted-context"]')?.getAttribute('content') || 'None'}</p>
+              <p>Environment: {import.meta.env.DEV ? 'Development' : 'Production'}</p>
+              <p>App secret configured: {import.meta.env.VITE_APP_SECRET ? 'Yes' : 'No'}</p>
+            </details>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -72,7 +121,19 @@ const FormPage: React.FC = () => {
           </a>
         </div>
         
-        <h1>Enjoy lower KWh price while charging at our stores!</h1>
+        <h1>
+          {contextData.firstName && (
+            <span className="greeting">Hi {contextData.firstName}, </span>
+          )}
+          Enjoy lower KWh price while charging at our stores!
+        </h1>
+        
+        {contextData.evseId && (
+          <div className="context-info">
+            <p>Selected Charger: {contextData.evseId}</p>
+            {contextData.operatorId && <p>Operator: {contextData.operatorId}</p>}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
