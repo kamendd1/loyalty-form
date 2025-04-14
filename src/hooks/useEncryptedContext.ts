@@ -20,11 +20,22 @@ export const useEncryptedContext = () => {
   const [isFromMobileApp, setIsFromMobileApp] = useState(false);
 
   useEffect(() => {
+    // Log on mount
+    console.log('useEncryptedContext mounted');
+    
     const readEncryptedContext = () => {
       try {
         // Check if we're being loaded from the mobile app
+        console.log('Reading meta tag...');
         const metaTag = document.querySelector('meta[name="encrypted-context"]');
+        console.log('Meta tag found:', !!metaTag);
+        
         const encryptedData = metaTag?.getAttribute('content');
+        console.log('Meta tag content:', {
+          hasContent: !!encryptedData,
+          length: encryptedData?.length,
+          preview: encryptedData ? encryptedData.substring(0, 20) + '...' : 'none'
+        });
         
         // Log initialization state
         Logger.info('Context initialization', {
