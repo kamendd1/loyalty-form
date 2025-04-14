@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEncryptedContext } from '../hooks/useEncryptedContext';
 
@@ -88,23 +88,13 @@ const FormPage: React.FC = () => {
   }
 
   // Only show error if we're in mobile app and have an error
+  // Show error page for mobile app errors
   if (isFromMobileApp && contextError) {
+    const ErrorPage = React.lazy(() => import('./ErrorPage'));
     return (
-      <div className="container">
-        <div className="form-card">
-          <div className="error-message">
-            <p>Failed to load context from mobile app. Please try again.</p>
-            <details>
-              <summary>Debug Information</summary>
-              <p>Error: {contextError}</p>
-              <p>Meta tag present: {document.querySelector('meta[name="encrypted-context"]') ? 'Yes' : 'No'}</p>
-              <p>Meta tag content: {document.querySelector('meta[name="encrypted-context"]')?.getAttribute('content') || 'None'}</p>
-              <p>Environment: {import.meta.env.DEV ? 'Development' : 'Production'}</p>
-              <p>App secret configured: {import.meta.env.VITE_APP_SECRET ? 'Yes' : 'No'}</p>
-            </details>
-          </div>
-        </div>
-      </div>
+      <Suspense fallback={<div>Loading error information...</div>}>
+        <ErrorPage />
+      </Suspense>
     );
   }
 
