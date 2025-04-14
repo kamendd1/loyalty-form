@@ -343,8 +343,25 @@ input.error {
   margin: 0.5rem 0;
 }
 
-.error-message p:last-child {
-  font-size: 0.9rem;
-  color: #666;
+.error-message details {
   margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 4px;
+  text-align: left;
+}
+
+.error-message details summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--Light-Light---Danger);
+}
+
+.error-message details p {
+  margin: 0.5rem 0;
+  font-family: monospace;
+  font-size: 0.9rem;
+  word-break: break-all;
+  color: #666;
 }

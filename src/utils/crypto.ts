@@ -10,7 +10,7 @@ if (!SECRET_KEY && !import.meta.env.DEV) {
 export const decryptPayload = (encryptedData: string): any => {
   if (!SECRET_KEY) {
     if (import.meta.env.DEV) {
-      // In development, return mock data structure
+      console.log('Development mode: using mock data');
       return {
         firstName: 'Dev',
         userId: '12345',
@@ -18,15 +18,38 @@ export const decryptPayload = (encryptedData: string): any => {
         operatorId: 'DEVOP'
       };
     }
+    console.error('Encryption key missing in production environment');
     throw new Error('Encryption key not configured');
   }
 
+  if (!encryptedData) {
+    console.error('No encrypted data provided');
+    throw new Error('No encrypted data provided');
+  }
+
   try {
+    console.log('Attempting to decrypt payload...');
     const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY);
     const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
-    return JSON.parse(decryptedText);
+    
+    if (!decryptedText) {
+      console.error('Decryption produced empty result');
+      throw new Error('Decryption failed - empty result');
+    }
+
+    try {
+      const parsed = JSON.parse(decryptedText);
+      console.log('Successfully decrypted and parsed payload');
+      return parsed;
+    } catch (parseError) {
+      console.error('Failed to parse decrypted data:', parseError);
+      throw new Error('Invalid data format after decryption');
+    }
   } catch (error) {
-    console.error('Failed to decrypt payload:', error);
-    throw new Error('Failed to decrypt data');
+    console.error('Decryption error:', error);
+    if (error instanceof Error) {
+      throw new Error(`Decryption failed: ${error.message}`);
+    }
+    throw new Error('Decryption failed: Unknown error');
   }
 };
