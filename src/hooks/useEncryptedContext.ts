@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { decryptPayload } from '../utils/crypto';
 import { FormPayload } from '../types/payload';
+import Logger from '../utils/logger';
 
 // Mock data for development environment
 const DEV_MOCK_DATA: FormPayload = {
@@ -26,11 +27,13 @@ export const useEncryptedContext = () => {
         const encryptedData = metaTag?.getAttribute('content');
         
         // Log initialization state
-        console.log('Initialization:', {
+        Logger.info('Context initialization', {
           environment: import.meta.env.DEV ? 'development' : 'production',
           hasMetaTag: !!metaTag,
           hasEncryptedData: !!encryptedData,
-          hasAppSecret: !!import.meta.env.VITE_APP_SECRET
+          hasAppSecret: !!import.meta.env.VITE_APP_SECRET,
+          url: window.location.href,
+          userAgent: navigator.userAgent
         });
 
         // Only set as mobile app if we have both meta tag and encrypted data
@@ -38,7 +41,7 @@ export const useEncryptedContext = () => {
 
         // In development, use mock data
         if (import.meta.env.DEV) {
-          console.log('Using development mock data');
+          Logger.debug('Using development mock data');
           setContextData(DEV_MOCK_DATA);
           setIsLoading(false);
           return;
@@ -46,25 +49,31 @@ export const useEncryptedContext = () => {
 
         // If we have encrypted data, try to decrypt it
         if (encryptedData) {
-          console.log('Attempting to decrypt context data');
+          Logger.info('Found encrypted context data');
           try {
             const decryptedData = decryptPayload(encryptedData) as FormPayload;
             if (decryptedData) {
-              console.log('Successfully decrypted context data');
+              Logger.info('Successfully loaded context', {
+                fields: Object.keys(decryptedData)
+              });
               setContextData(decryptedData);
             }
           } catch (decryptError) {
-            console.error('Decryption error:', decryptError);
+            Logger.error('Failed to decrypt context', decryptError, {
+              isMobileApp: !!metaTag
+            });
             // Don't set error if we're not in mobile app
             if (metaTag) {
               setError('Failed to decrypt context data');
             }
           }
         } else {
-          console.log('No encrypted data found, proceeding without context');
+          Logger.info('No encrypted data found, proceeding without context');
         }
       } catch (err) {
-        console.error('Context processing error:', err);
+        Logger.error('Context processing error', err, {
+          hasMetaTag: !!document.querySelector('meta[name="encrypted-context"]')
+        });
         // Only set error if we're supposed to have context
         if (document.querySelector('meta[name="encrypted-context"]')) {
           setError('Error processing encrypted context');
@@ -78,6 +87,4 @@ export const useEncryptedContext = () => {
   }, []);
 
   return { contextData, isLoading, error, isFromMobileApp };
-
-  return { contextData, isLoading, error };
 };
