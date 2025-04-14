@@ -93,7 +93,7 @@ const FormPage: React.FC = () => {
         <div className="form-card">
           <div className="error-message">
             <p>Failed to load context. Please try again.</p>
-            {process.env.NODE_ENV === 'development' && <p>{contextError}</p>}
+            {import.meta.env.DEV && <p>{contextError}</p>}
           </div>
         </div>
       </div>

@@ -10,11 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "crypto-js": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.0"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "@types/node": "^20.11.30",
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
