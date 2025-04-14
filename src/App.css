@@ -305,3 +305,46 @@ input.error {
   color: #666;
   font-size: 1.1rem;
 }
+
+.context-info {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 349px;
+}
+
+.context-info p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.greeting {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  background: var(--Light-Light---Primary-Gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* Fallback for browsers that don't support gradient text */
+  color: #009E3F;
+}
+
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  color: var(--Light-Light---Danger);
+}
+
+.error-message p {
+  margin: 0.5rem 0;
+}
+
+.error-message p:last-child {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 1rem;
+}

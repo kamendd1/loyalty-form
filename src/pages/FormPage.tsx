@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEncryptedContext } from '../hooks/useEncryptedContext';
 
 const FormPage: React.FC = () => {
   const defaultLogo = "https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw";
@@ -8,6 +9,17 @@ const FormPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { contextData, isLoading, error: contextError } = useEncryptedContext();
+
+  // Pre-fill loyalty number if provided in context
+  React.useEffect(() => {
+    if (contextData.loyaltyNumber) {
+      const number = contextData.loyaltyNumber.toString();
+      if (validateInput(number)) {
+        setLoyaltyNumber(number);
+      }
+    }
+  }, [contextData]);
 
   const validateInput = (value: string) => {
     if (!/^\d*$/.test(value)) {
@@ -52,12 +64,41 @@ const FormPage: React.FC = () => {
 
     setIsSubmitting(true);
     
-    // Simulate API call
+    // Simulate API call with context data
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Navigate to success page
-    navigate('/success');
+    // Navigate to success page with context
+    navigate('/success', { 
+      state: { 
+        loyaltyNumber,
+        ...contextData
+      }
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="container">
+        <div className="form-card">
+          <div className="loading-spinner" />
+          <p>Loading context...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (contextError) {
+    return (
+      <div className="container">
+        <div className="form-card">
+          <div className="error-message">
+            <p>Failed to load context. Please try again.</p>
+            {process.env.NODE_ENV === 'development' && <p>{contextError}</p>}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -72,7 +113,19 @@ const FormPage: React.FC = () => {
           </a>
         </div>
         
-        <h1>Enjoy lower KWh price while charging at our stores!</h1>
+        <h1>
+          {contextData.firstName && (
+            <span className="greeting">Hi {contextData.firstName}, </span>
+          )}
+          Enjoy lower KWh price while charging at our stores!
+        </h1>
+        
+        {contextData.evseId && (
+          <div className="context-info">
+            <p>Selected Charger: {contextData.evseId}</p>
+            {contextData.operatorId && <p>Operator: {contextData.operatorId}</p>}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
