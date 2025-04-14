@@ -93,7 +93,14 @@ const FormPage: React.FC = () => {
         <div className="form-card">
           <div className="error-message">
             <p>Failed to load context from mobile app. Please try again.</p>
-            {import.meta.env.DEV && <p>{contextError}</p>}
+            <details>
+              <summary>Debug Information</summary>
+              <p>Error: {contextError}</p>
+              <p>Meta tag present: {document.querySelector('meta[name="encrypted-context"]') ? 'Yes' : 'No'}</p>
+              <p>Meta tag content: {document.querySelector('meta[name="encrypted-context"]')?.getAttribute('content') || 'None'}</p>
+              <p>Environment: {import.meta.env.DEV ? 'Development' : 'Production'}</p>
+              <p>App secret configured: {import.meta.env.VITE_APP_SECRET ? 'Yes' : 'No'}</p>
+            </details>
           </div>
         </div>
       </div>

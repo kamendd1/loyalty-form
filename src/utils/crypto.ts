@@ -1,10 +1,10 @@
 import CryptoJS from 'crypto-js';
 
 // In Vite, environment variables are accessed through import.meta.env
-const SECRET_KEY = import.meta.env.VITE_ENCRYPTION_KEY;
+const SECRET_KEY = import.meta.env.VITE_APP_SECRET;
 
 if (!SECRET_KEY && !import.meta.env.DEV) {
-  console.error('VITE_ENCRYPTION_KEY is not set in environment variables');
+  console.error('VITE_APP_SECRET is not set in environment variables');
 }
 
 export const decryptPayload = (encryptedData: string): any => {
