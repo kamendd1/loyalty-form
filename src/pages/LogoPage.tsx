@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { setCurrentLogo, storeLogo } from '../utils/logoStorage';
 
 const LogoPage: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState('');
+  const [customFilename, setCustomFilename] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -14,11 +16,26 @@ const LogoPage: React.FC = () => {
       return;
     }
 
-    // Store the logo URL in localStorage
-    localStorage.setItem('customLogoUrl', logoUrl);
-    
-    // Navigate back to the form
-    navigate('/');
+    try {
+      // Store and set as current
+      const sanitizedFilename = customFilename
+        .toLowerCase()
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/[^a-z0-9-_.]/g, '') // Remove invalid characters
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+
+      const filename = storeLogo(logoUrl, sanitizedFilename || undefined);
+      setCurrentLogo(logoUrl);
+      
+      // Clear form
+      setLogoUrl('');
+      setCustomFilename('');
+      
+      // Navigate back to form with filename
+      navigate(`/${filename}`);
+    } catch (err) {
+      setError('Invalid logo URL');
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,9 +46,9 @@ const LogoPage: React.FC = () => {
   return (
     <div className="container">
       <div className="form-card">
-        <h1>Customize Logo</h1>
+        <h1>Add Logo</h1>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="add-logo-form">
           <div className="input-group">
             <input
               type="url"
@@ -42,6 +59,20 @@ const LogoPage: React.FC = () => {
             />
             <p className={`input-help ${error ? 'error-text' : ''}`}>
               {error || 'Enter the URL of your logo image'}
+            </p>
+          </div>
+          
+          <div className="input-group">
+            <input
+              type="text"
+              value={customFilename}
+              onChange={(e) => setCustomFilename(e.target.value)}
+              placeholder="Custom filename (e.g., lidl-logo.png)"
+            />
+            <p className={`input-help ${customFilename ? 'url-preview' : ''}`}>
+              {customFilename 
+                ? `Will be accessible at /${customFilename.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_.]/g, '')}` 
+                : 'Leave empty to use filename from URL'}
             </p>
           </div>
           
@@ -61,7 +92,7 @@ const LogoPage: React.FC = () => {
             type="submit" 
             className="submit-button"
           >
-            Save Logo
+            Add Logo
           </button>
         </form>
       </div>

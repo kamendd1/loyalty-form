@@ -9,7 +9,6 @@ const DEV_MOCK_DATA: FormPayload = {
   evseId: 'DEV_EVSE_001',
   operatorId: 'DEV_OPERATOR_001',
   appLanguage: 'en',
-  loyaltyNumber: '1234567',
   firstName: 'John'
 };
 

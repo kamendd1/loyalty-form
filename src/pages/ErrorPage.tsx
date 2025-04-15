@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
-const ErrorPage: React.FC = () => {
+interface ErrorPageProps {
+  message?: string;
+}
+
+const ErrorPage: React.FC<ErrorPageProps> = ({ message = 'Form Loading Error' }) => {
   const [debugInfo, setDebugInfo] = useState({
     metaTag: null as Element | null,
     metaContent: '',
@@ -46,7 +50,7 @@ const ErrorPage: React.FC = () => {
       padding: '20px',
       fontFamily: 'monospace'
     }}>
-      <h1 style={{ color: 'red' }}>Form Loading Error</h1>
+      <h1 style={{ color: 'red' }}>{message}</h1>
       <div style={{ marginBottom: '20px' }}>
         <h2>Debug Information:</h2>
         <pre style={{ 

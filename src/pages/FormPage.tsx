@@ -1,19 +1,48 @@
-import React, { useState, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEncryptedContext } from '../hooks/useEncryptedContext';
+import { getCurrentLogo, setCurrentLogo, getLogoByFilename } from '../utils/logoStorage';
+
+const ErrorPage = lazy(() => import('./ErrorPage'));
 
 const FormPage: React.FC = () => {
   const defaultLogo = "https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw";
-  const customLogo = localStorage.getItem('customLogoUrl');
   const [loyaltyNumber, setLoyaltyNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { logo: logoParam } = useParams();
+  const [logoUrl, setLogoUrl] = useState<string>(getCurrentLogo() || defaultLogo);
+
+  // Update logo URL
+  const updateLogo = (newUrl: string) => {
+    setLogoUrl(newUrl);
+    setCurrentLogo(newUrl);
+    // Extract filename from URL
+    const filename = new URL(newUrl).pathname.split('/').pop() || 'logo';
+    // Update URL with filename
+    navigate(`/${filename}`);
+  };
+
+  // Handle URL parameters
+  useEffect(() => {
+    if (logoParam) {
+      const logoUrl = getLogoByFilename(logoParam);
+      if (logoUrl) {
+        setLogoUrl(logoUrl);
+        setCurrentLogo(logoUrl);
+      } else {
+        console.error('Logo not found:', logoParam);
+        setLogoUrl(defaultLogo);
+      }
+    }
+  }, [logoParam, defaultLogo]);
+
   const { contextData, isLoading, error: contextError, isFromMobileApp } = useEncryptedContext();
 
   // Pre-fill loyalty number if provided in context
-  React.useEffect(() => {
-    if (contextData.loyaltyNumber) {
+  useEffect(() => {
+    if (contextData?.loyaltyNumber) {
       const number = contextData.loyaltyNumber.toString();
       if (validateInput(number)) {
         setLoyaltyNumber(number);
@@ -67,8 +96,9 @@ const FormPage: React.FC = () => {
     // Simulate API call with context data
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Navigate to success page with context
-    navigate('/success', { 
+    // Navigate to success page with context and logo
+    const successPath = logoParam ? `/${logoParam}/success` : '/success';
+    navigate(successPath, { 
       state: { 
         loyaltyNumber,
         ...contextData
@@ -87,13 +117,10 @@ const FormPage: React.FC = () => {
     );
   }
 
-  // Only show error if we're in mobile app and have an error
-  // Show error page for mobile app errors
   if (isFromMobileApp && contextError) {
-    const ErrorPage = React.lazy(() => import('./ErrorPage'));
     return (
       <Suspense fallback={<div>Loading error information...</div>}>
-        <ErrorPage />
+        <ErrorPage message="Failed to load context" />
       </Suspense>
     );
   }
@@ -104,24 +131,25 @@ const FormPage: React.FC = () => {
         <div className="logo-container">
           <a href="/logo" className="logo-link">
             <img 
-              src={customLogo || defaultLogo}
+              src={logoUrl}
               alt="Company Logo" 
               className="logo"
+              onError={() => updateLogo(defaultLogo)}
             />
           </a>
         </div>
         
         <h1>
-          {contextData.firstName && (
+          {contextData?.firstName && contextData.firstName !== 'John' && contextData?.userId !== 'DEV_USER_001' && (
             <span className="greeting">Hi {contextData.firstName}, </span>
           )}
           Enjoy lower KWh price while charging at our stores!
         </h1>
         
-        {contextData.evseId && (
+        {contextData?.evseId && contextData.evseId !== 'DEV_EVSE_001' && contextData?.operatorId && contextData.operatorId !== 'DEV_OPERATOR_001' && contextData?.userId !== 'DEV_USER_001' && (
           <div className="context-info">
             <p>Selected Charger: {contextData.evseId}</p>
-            {contextData.operatorId && <p>Operator: {contextData.operatorId}</p>}
+            <p>Operator: {contextData.operatorId}</p>
           </div>
         )}
         
@@ -135,6 +163,7 @@ const FormPage: React.FC = () => {
               maxLength={7}
               pattern="\d*"
               inputMode="numeric"
+              placeholder=""
             />
             <p className={`input-help ${error ? 'error-text' : ''}`}>
               {error || 'Enter your loyalty card number'}
