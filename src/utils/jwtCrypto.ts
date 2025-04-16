@@ -59,25 +59,35 @@ export const decodeJwtPayload = (token: string): any => {
  */
 export const extractJwtToken = (): string | null => {
   try {
-    // Check for token in meta tag
+    // First, check for token in X-Payload meta tag (as per vendor instructions)
+    // The vendor might be adding this as a meta tag instead of a header
+    const xPayloadMeta = document.querySelector('meta[name="X-Payload"]') || 
+                         document.querySelector('meta[name="x-payload"]');
+    if (xPayloadMeta) {
+      const content = xPayloadMeta.getAttribute('content');
+      if (content) {
+        Logger.info('Found JWT token in X-Payload meta tag', {
+          length: content.length
+        });
+        return content;
+      }
+    }
+    
+    // Check for token in encrypted-context meta tag (our previous implementation)
     const metaTag = document.querySelector('meta[name="encrypted-context"]');
     if (metaTag) {
       const content = metaTag.getAttribute('content');
       if (content) {
-        Logger.info('Found JWT token in meta tag', {
+        Logger.info('Found JWT token in encrypted-context meta tag', {
           length: content.length
         });
         return content;
       }
     }
 
-    // Check for token in X-Payload header (for server-side rendering)
-    // Note: This won't work in client-side code due to CORS restrictions
-    // This is just for documentation purposes
-    
     // Check for token in URL query parameter (fallback)
     const urlParams = new URLSearchParams(window.location.search);
-    const tokenParam = urlParams.get('token');
+    const tokenParam = urlParams.get('token') || urlParams.get('payload');
     if (tokenParam) {
       Logger.info('Found JWT token in URL parameter', {
         length: tokenParam.length
@@ -93,6 +103,16 @@ export const extractJwtToken = (): string | null => {
       });
       return storedToken;
     }
+    
+    // Log all meta tags for debugging
+    const allMetaTags = document.querySelectorAll('meta');
+    Logger.info('All meta tags (looking for payload)', {
+      count: allMetaTags.length,
+      tags: Array.from(allMetaTags).map(tag => ({
+        name: tag.getAttribute('name') || tag.getAttribute('property') || 'unnamed',
+        content: tag.getAttribute('content')?.substring(0, 30) + '...' || 'no-content'
+      }))
+    });
 
     Logger.warn('No JWT token found in any source');
     return null;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { decryptPayload } from '../utils/crypto'; // Keep for backward compatibility
-import { decodeJwtPayload } from '../utils/jwtCrypto'; // Only import what we use
+import { decodeJwtPayload, extractJwtToken } from '../utils/jwtCrypto';
 import { FormPayload } from '../types/payload';
 import Logger from '../utils/logger';
 
@@ -30,16 +30,17 @@ export const useEncryptedContext = () => {
     
     const readEncryptedContext = () => {
       try {
-        // Check if we're being loaded from the mobile app
-        console.log('Reading meta tag...');
+        // First try to extract the token from any available source
+        console.log('Extracting token from available sources...');
+        const encryptedData = extractJwtToken();
+        
+        // For backward compatibility, also check the encrypted-context meta tag
         const metaTag = document.querySelector('meta[name="encrypted-context"]');
         console.log('Meta tag found:', !!metaTag);
         Logger.info('Meta tag check', {
           found: !!metaTag,
           attributes: metaTag ? Array.from(metaTag.attributes).map(attr => `${attr.name}=${attr.value}`).join(', ') : 'none'
         });
-        
-        const encryptedData = metaTag?.getAttribute('content');
         console.log('Meta tag content:', {
           hasContent: !!encryptedData,
           length: encryptedData?.length,
