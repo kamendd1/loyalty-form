@@ -151,8 +151,8 @@ async function handler(req, res) {
           
           if (response.ok) {
             const userData = JSON.parse(responseText);
-            firstName = userData.firstName || '';
-            lastName = userData.lastName || '';
+            firstName = userData.data?.firstName || '';
+            lastName = userData.data?.lastName || '';
             console.log('Successfully fetched user info:', { firstName, lastName });
           } else {
             console.error('Failed to fetch user info:', response.status);
