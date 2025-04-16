@@ -37,16 +37,43 @@ const errorHtml = `<!DOCTYPE html>
 // Main route handler
 app.get('/', (req, res) => {
   try {
-    // Get the X-Payload header (case insensitive)
-    const xPayload = req.headers['x-payload'] || 
-                     req.headers['X-Payload'] || 
-                     req.query.payload || 
-                     req.query.token;
+    // Check if this is a request from the vendor backend or from our redirect
+    const isRedirectedRequest = req.query.payload || req.query.token;
+    const isVendorRequest = req.headers['x-payload'] || req.headers['X-Payload'];
     
     console.log('Headers:', JSON.stringify(req.headers));
+    console.log('Query params:', JSON.stringify(req.query));
+    console.log('Is redirected request:', !!isRedirectedRequest);
+    console.log('Is vendor request:', !!isVendorRequest);
+    
+    // If this is already a redirected request with the payload in the URL, serve the static app
+    if (isRedirectedRequest) {
+      console.log('This is a redirected request with payload in URL, serving static app');
+      // Return a simple HTML that loads your static app
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Loyalty Form</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // This is a static placeholder. Your app will load and read the payload from the URL.
+    console.log('Loading application with payload in URL');
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/assets/index.js"></script>
+</body>
+</html>`;
+      return res.send(html);
+    }
+    
+    // Get the X-Payload header (case insensitive)
+    const xPayload = req.headers['x-payload'] || req.headers['X-Payload'];
     
     if (xPayload) {
-      console.log('Received payload:', xPayload.substring(0, 30) + '...');
+      console.log('Received payload from vendor:', xPayload.substring(0, 30) + '...');
       
       try {
         // Decode the JWT token
@@ -54,7 +81,8 @@ app.get('/', (req, res) => {
         const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
         console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
         
-        // Create HTML with the payload embedded as a meta tag
+        // Create HTML with the payload embedded as a meta tag and a different domain for redirect
+        // Use a different domain to avoid infinite loops
         const payloadString = JSON.stringify(decodedPayload).replace(/'/g, "\\'");
         const html = `<!DOCTYPE html>
 <html>
@@ -63,13 +91,10 @@ app.get('/', (req, res) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="encrypted-context" content='${payloadString}' />
-  <script>
-    // Redirect to the main app with the payload as a URL parameter
-    window.location.href = "https://loyalty-form.vercel.app/?payload=${encodeURIComponent(xPayload)}";
-  </script>
 </head>
 <body>
-  <p>Loading application...</p>
+  <div id="root"></div>
+  <script type="module" src="/assets/index.js"></script>
 </body>
 </html>`;
         
@@ -79,7 +104,8 @@ app.get('/', (req, res) => {
         return res.status(500).send(errorHtml);
       }
     } else {
-      console.log('No X-Payload header or payload parameter found');
+      console.log('No X-Payload header found in vendor request');
+      // For vendor requests without a payload, return an error
       return res.status(400).send(errorHtml);
     }
   } catch (error) {
