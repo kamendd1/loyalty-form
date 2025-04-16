@@ -13,7 +13,7 @@
   "routes": [
     {
       "src": "/\\?payload=(.*)",
-      "dest": "/dist/index.html"
+      "dest": "/server.js"
     },
     {
       "src": "^/$",

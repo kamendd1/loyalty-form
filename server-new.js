@@ -253,8 +253,8 @@ export default function handler(req, res) {
       };
       
       // Try to fetch user info if we have a userId but no firstName
-      const apiBaseUrl = API_BASE_URL;
-      const apiToken = API_TOKEN;
+      const apiBaseUrl = 'https://techarch.stable.qa.charge.ampeco.tech';
+      const apiToken = '0a7293a4-7c5d-47ae-9cc5-0f1868fbb5cf';
       
       if (userData.userId && !userData.firstName && apiBaseUrl && apiToken) {
         fetch(apiBaseUrl + '/public-api/resources/users/v1.0/' + userData.userId, {
