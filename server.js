@@ -92,8 +92,9 @@ export default function handler(req, res) {
 <body>
   <div id="root"></div>
   
-  <!-- Load the React app scripts -->
-  <script type="module" src="/assets/index.js"></script>
+  <!-- Load the React app scripts with correct hashed filenames -->
+  <link rel="stylesheet" href="/assets/index-BN_SKaEV.css">
+  <script type="module" src="/assets/index-CwYl2miS.js"></script>
   
   <!-- Fallback if scripts don't load -->
   <script>
