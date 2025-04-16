@@ -40,57 +40,42 @@ export default function handler(req, res) {
     
     console.log('Is redirected request:', isRedirectedRequest);
     
-    // If this is a redirected request (has payload in URL), serve the app directly without redirecting again
+    // Even for redirected requests, we'll redirect to the React app's form page
     if (isRedirectedRequest) {
-      console.log('This is a redirected request with payload in URL - serving app directly');
+      console.log('This is a redirected request with payload in URL - redirecting to React app');
       
       try {
-        // Decode the JWT token to embed as meta tag
+        // Decode the JWT token to verify it's valid
         const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
         const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
         console.log('Successfully decoded payload for redirected request');
         
-        // Create HTML with the payload embedded as a meta tag but NO redirect
-        const payloadString = JSON.stringify(decodedPayload).replace(/'/g, "\\'");
+        // Get the current hostname to avoid hardcoding the redirect URL
+        const currentHost = req.headers.host || 'loyalty-form.vercel.app';
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
         
-        // Extract User ID and EVSE ID from the payload if available
-        const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
-        const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
-        const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
-        
+        // Create a simple HTML page that redirects to the React app
         const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Loyalty Form</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="encrypted-context" content='${payloadString}' />
+  <title>Redirecting to Loyalty Form</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-    h1 { color: #333; text-align: center; }
-    .info-card { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; }
-    .user-info { margin-bottom: 20px; }
-    .payload { background: #eef; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 20px auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <h1>Loyalty Form</h1>
+  <h1>Redirecting to Loyalty Form</h1>
+  <div class="loader"></div>
+  <p>You'll be redirected to the form page in a moment...</p>
   
-  <div class="info-card user-info">
-    <h2>User Information</h2>
-    <p><strong>User ID:</strong> ${userId}</p>
-    <p><strong>EVSE ID:</strong> ${evseId}</p>
-    <p><strong>EVSE Reference:</strong> ${evseReference}</p>
-  </div>
-  
-  <div class="info-card">
-    <h2>Full Payload Data</h2>
-    <div class="payload">
-      <pre>${JSON.stringify(decodedPayload, null, 2)}</pre>
-    </div>
-  </div>
-  
-  <div id="root"></div>
+  <script>
+    // Redirect immediately to the React app
+    window.location.href = "${protocol}://${currentHost}/?payload=${encodeURIComponent(xPayload)}";
+  </script>
 </body>
 </html>`;
         
@@ -164,14 +149,13 @@ export default function handler(req, res) {
       const currentHost = req.headers.host || 'loyalty-form.vercel.app';
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       
-      // Create a simple HTML page with the payload as a meta tag
+      // Create a simple HTML page that redirects to the React app
       const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loyalty Form</title>
-  <meta name="encrypted-context" content='${payloadString}' />
+  <title>Redirecting to Loyalty Form</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 800px; margin: 0 auto; }
     .info { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: left; }
@@ -180,7 +164,7 @@ export default function handler(req, res) {
   </style>
 </head>
 <body>
-  <h1>Loyalty Form</h1>
+  <h1>Redirecting to Loyalty Form</h1>
   <div class="loader"></div>
   <p>Processing your request...</p>
   
@@ -191,13 +175,13 @@ export default function handler(req, res) {
     <p><strong>EVSE Reference:</strong> ${evseReference}</p>
   </div>
   
-  <p>This page will automatically redirect you to the application.</p>
+  <p>You'll be redirected to the form page in a moment...</p>
   
   <script>
-    // Redirect to the main app with the payload as a URL parameter after a short delay
+    // Redirect to the form page with the payload as a URL parameter after a short delay
     setTimeout(function() {
       window.location.href = "${protocol}://${currentHost}/?payload=${encodeURIComponent(xPayload)}";
-    }, 2000);
+    }, 1000); // Reduced delay to 1 second
   </script>
 </body>
 </html>`;
