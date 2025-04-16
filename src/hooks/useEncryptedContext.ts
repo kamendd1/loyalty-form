@@ -41,10 +41,25 @@ export const useEncryptedContext = () => {
         // Also check the encrypted-context meta tag for backward compatibility
         const metaTag = document.querySelector('meta[name="encrypted-context"]');
         
-        // Try to get the payload from either source
+        // Try to get the payload from various sources
         let encryptedData = null;
         
-        if (xPayloadMeta) {
+        // 1. Check URL parameters first (most reliable for WebView)
+        const urlParams = new URLSearchParams(window.location.search);
+        const payloadParam = urlParams.get('payload') || urlParams.get('token') || urlParams.get('x-payload');
+        
+        if (payloadParam) {
+          encryptedData = payloadParam;
+          console.log('Found payload in URL parameters:', !!encryptedData);
+          Logger.info('Found payload in URL parameters', {
+            hasContent: !!encryptedData,
+            contentLength: encryptedData?.length,
+            paramName: payloadParam === urlParams.get('payload') ? 'payload' : 
+                       payloadParam === urlParams.get('token') ? 'token' : 'x-payload'
+          });
+        }
+        // 2. Check meta tags
+        else if (xPayloadMeta) {
           encryptedData = xPayloadMeta.getAttribute('content');
           console.log('Found X-Payload meta tag:', !!encryptedData);
           Logger.info('Found X-Payload meta tag', {
