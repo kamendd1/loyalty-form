@@ -4,9 +4,122 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>Loyalty Form</title>
+    <!-- Early debugging script -->
+    <script>
+      // Create a debug log element that will be visible even if React fails to load
+      window.addEventListener('DOMContentLoaded', function() {
+        try {
+          // Create debug container
+          var debugContainer = document.createElement('div');
+          debugContainer.id = 'early-debug';
+          debugContainer.style.position = 'fixed';
+          debugContainer.style.top = '0';
+          debugContainer.style.left = '0';
+          debugContainer.style.width = '100%';
+          debugContainer.style.backgroundColor = 'rgba(0,0,0,0.8)';
+          debugContainer.style.color = 'white';
+          debugContainer.style.fontFamily = 'monospace';
+          debugContainer.style.fontSize = '12px';
+          debugContainer.style.padding = '10px';
+          debugContainer.style.zIndex = '9999';
+          debugContainer.style.display = 'none'; // Hidden by default
+          
+          // Add toggle button
+          var toggleButton = document.createElement('button');
+          toggleButton.textContent = 'Show Debug';
+          toggleButton.style.position = 'fixed';
+          toggleButton.style.bottom = '10px';
+          toggleButton.style.right = '10px';
+          toggleButton.style.zIndex = '10000';
+          toggleButton.style.padding = '5px 10px';
+          toggleButton.style.backgroundColor = '#333';
+          toggleButton.style.color = 'white';
+          toggleButton.style.border = 'none';
+          toggleButton.style.borderRadius = '4px';
+          
+          toggleButton.onclick = function() {
+            if (debugContainer.style.display === 'none') {
+              debugContainer.style.display = 'block';
+              this.textContent = 'Hide Debug';
+            } else {
+              debugContainer.style.display = 'none';
+              this.textContent = 'Show Debug';
+            }
+          };
+          
+          // Collect meta tags
+          var metaTags = document.querySelectorAll('meta');
+          var metaTagsInfo = '<h3>Meta Tags:</h3><ul>';
+          
+          if (metaTags.length === 0) {
+            metaTagsInfo += '<li>No meta tags found</li>';
+          } else {
+            for (var i = 0; i < metaTags.length; i++) {
+              var tag = metaTags[i];
+              var name = tag.getAttribute('name') || tag.getAttribute('property') || 'unnamed';
+              var content = tag.getAttribute('content') || 'no content';
+              metaTagsInfo += '<li><strong>' + name + ':</strong> ' + content + '</li>';
+            }
+          }
+          metaTagsInfo += '</ul>';
+          
+          // Add URL info
+          var urlInfo = '<h3>URL Info:</h3>' +
+                        '<p><strong>URL:</strong> ' + window.location.href + '</p>' +
+                        '<p><strong>Referrer:</strong> ' + document.referrer + '</p>' +
+                        '<p><strong>User Agent:</strong> ' + navigator.userAgent + '</p>';
+          
+          // Add content to debug container
+          debugContainer.innerHTML = '<h2>Early Debug Info</h2>' + metaTagsInfo + urlInfo;
+          
+          // Add to document
+          document.body.appendChild(debugContainer);
+          document.body.appendChild(toggleButton);
+          
+          console.log('Early debug initialized');
+        } catch (e) {
+          console.error('Error in early debug:', e);
+        }
+      });
+      
+      // Also add a global error handler
+      window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+        try {
+          var errorContainer = document.createElement('div');
+          errorContainer.style.position = 'fixed';
+          errorContainer.style.top = '50%';
+          errorContainer.style.left = '50%';
+          errorContainer.style.transform = 'translate(-50%, -50%)';
+          errorContainer.style.backgroundColor = 'rgba(255,0,0,0.8)';
+          errorContainer.style.color = 'white';
+          errorContainer.style.padding = '20px';
+          errorContainer.style.borderRadius = '5px';
+          errorContainer.style.maxWidth = '80%';
+          errorContainer.style.zIndex = '10001';
+          
+          errorContainer.innerHTML = '<h3>Error Detected</h3>' +
+                                    '<p>' + event.message + '</p>' +
+                                    '<p><small>' + (event.filename || 'unknown file') + ':' + (event.lineno || '?') + '</small></p>';
+          
+          document.body.appendChild(errorContainer);
+        } catch (e) {
+          // Last resort - alert
+          alert('Error: ' + event.message);
+        }
+      });
+    </script>
   </head>
   <body>
+    <!-- Fallback content in case React fails to load -->
+    <noscript>
+      <div style="padding: 20px; text-align: center;">
+        <h2>JavaScript is required</h2>
+        <p>Please enable JavaScript to use this application.</p>
+      </div>
+    </noscript>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
