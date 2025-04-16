@@ -18,6 +18,10 @@ export const useEncryptedContext = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFromMobileApp, setIsFromMobileApp] = useState(false);
+  
+  // Add additional user-friendly information
+  const [userName, setUserName] = useState<string>('');
+  const [evseReference, setEvseReference] = useState<string>('');
 
   useEffect(() => {
     // Log on mount
@@ -137,14 +141,47 @@ export const useEncryptedContext = () => {
           // First try JWT decoding (new method)
           try {
             Logger.info('Attempting JWT decoding first');
-            const jwtData = decodeJwtPayload(encryptedData) as FormPayload;
-            if (jwtData) {
-              Logger.info('Successfully decoded JWT context', {
-                fields: Object.keys(jwtData)
+            const jwtData = decodeJwtPayload(encryptedData) as any;
+            
+            // Extract user information from the JWT payload
+            let extractedData: FormPayload = {};
+            
+            // Check if this is the new format with nested payload
+            if (jwtData.payload && typeof jwtData.payload === 'object') {
+              Logger.info('Found nested payload structure', {
+                payloadType: jwtData.payload.type,
+                hasParameters: !!jwtData.payload.parameters
               });
-              setContextData(jwtData);
-              return; // Exit early if JWT decoding succeeds
+              
+              // Extract user information from the parameters
+              if (jwtData.payload.parameters) {
+                extractedData = {
+                  userId: jwtData.payload.parameters.userId?.toString(),
+                  evseId: jwtData.payload.parameters.evseId?.toString(),
+                  firstName: jwtData.payload.parameters.firstName || 'User'
+                };
+                
+                // Set the EVSE reference if available
+                if (jwtData.payload.parameters.evsePhysicalReference) {
+                  setEvseReference(jwtData.payload.parameters.evsePhysicalReference);
+                }
+              }
+            } else {
+              // Assume direct mapping for backward compatibility
+              extractedData = jwtData as FormPayload;
             }
+            
+            // Set user name from firstName or default to 'User'
+            setUserName(extractedData.firstName || 'User');
+            
+            Logger.info('Successfully decoded JWT context', {
+              fields: Object.keys(extractedData),
+              userName: extractedData.firstName || 'User',
+              evseId: extractedData.evseId
+            });
+            
+            setContextData(extractedData);
+            return; // Exit early if JWT decoding succeeds
           } catch (jwtError) {
             Logger.warn('JWT decoding failed, falling back to legacy decryption', {
               error: jwtError instanceof Error ? jwtError.message : String(jwtError)
@@ -190,5 +227,12 @@ export const useEncryptedContext = () => {
     readEncryptedContext();
   }, []);
 
-  return { contextData, isLoading, error, isFromMobileApp };
+  return { 
+    contextData, 
+    isLoading, 
+    error, 
+    isFromMobileApp,
+    userName,
+    evseReference
+  };
 };

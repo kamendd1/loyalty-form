@@ -30,8 +30,77 @@ export default function handler(req, res) {
   // Only handle GET requests
   if (req.method === 'GET') {
     // Get the X-Payload header (case insensitive) or from URL query
-    const xPayload = req.headers['x-payload'] || req.headers['X-Payload'] || 
-                     (req.url.includes('?') && new URLSearchParams(req.url.split('?')[1]).get('payload'));
+    const urlParams = req.url.includes('?') ? new URLSearchParams(req.url.split('?')[1]) : new URLSearchParams();
+    const xPayload = req.headers['x-payload'] || req.headers['X-Payload'] || urlParams.get('payload');
+    
+    // Check if this is a redirected request (has payload in URL and no X-Payload header)
+    const isRedirectedRequest = urlParams.has('payload') && !req.headers['x-payload'] && !req.headers['X-Payload'];
+    
+    console.log('Is redirected request:', isRedirectedRequest);
+    
+    // If this is a redirected request (has payload in URL), serve the app directly without redirecting again
+    if (isRedirectedRequest) {
+      console.log('This is a redirected request with payload in URL - serving app directly');
+      
+      try {
+        // Decode the JWT token to embed as meta tag
+        const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
+        const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
+        console.log('Successfully decoded payload for redirected request');
+        
+        // Create HTML with the payload embedded as a meta tag but NO redirect
+        const payloadString = JSON.stringify(decodedPayload).replace(/'/g, "\\'");
+        
+        // Extract User ID and EVSE ID from the payload if available
+        const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
+        const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
+        const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
+        
+        const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Loyalty Form</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="encrypted-context" content='${payloadString}' />
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1 { color: #333; text-align: center; }
+    .info-card { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; }
+    .user-info { margin-bottom: 20px; }
+    .payload { background: #eef; padding: 10px; border-radius: 5px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Loyalty Form</h1>
+  
+  <div class="info-card user-info">
+    <h2>User Information</h2>
+    <p><strong>User ID:</strong> ${userId}</p>
+    <p><strong>EVSE ID:</strong> ${evseId}</p>
+    <p><strong>EVSE Reference:</strong> ${evseReference}</p>
+  </div>
+  
+  <div class="info-card">
+    <h2>Full Payload Data</h2>
+    <div class="payload">
+      <pre>${JSON.stringify(decodedPayload, null, 2)}</pre>
+    </div>
+  </div>
+  
+  <div id="root"></div>
+</body>
+</html>`;
+        
+        // Send the HTML response
+        res.setHeader('Content-Type', 'text/html');
+        res.statusCode = 200;
+        res.end(html);
+        return;
+      } catch (error) {
+        console.error('Error decoding JWT in redirected request:', error);
+      }
+    }
     
     // If this is a direct browser access without a payload, show a test page
     if (!xPayload) {
@@ -83,20 +152,49 @@ export default function handler(req, res) {
       
       // Create a simple HTML page with the payload as a meta tag
       const payloadString = JSON.stringify(decodedPayload).replace(/'/g, "\\'");
-      const html = `<!DOCTYPE html>
+      
+      // Get the current hostname to avoid hardcoding the redirect URL
+      const currentHost = req.headers.host || 'loyalty-form.vercel.app';
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      
+      // Create the redirect URL using the current hostname
+      const redirectUrl = `${protocol}://${currentHost}/app?payload=${encodeURIComponent(xPayload)}`;
+      console.log('Redirecting to:', redirectUrl);
+      
+      // Extract User ID and EVSE ID from the payload if available
+const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
+const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
+const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
+
+const html = `<!DOCTYPE html>
 <html>
 <head>
   <title>Loyalty Form</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="encrypted-context" content='${payloadString}' />
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    .info { background: #f5f5f5; padding: 20px; border-radius: 5px; display: inline-block; margin: 20px; text-align: left; }
+    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 20px auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
   <script>
-    // Redirect to the main app with the payload as a URL parameter
-    window.location.href = "https://loyalty-form.vercel.app/?payload=${encodeURIComponent(xPayload)}";
+    // Redirect to the main app with the payload as a URL parameter after a short delay
+    setTimeout(function() {
+      window.location.href = "${redirectUrl}";
+    }, 2000); // 2 second delay to show the information
   </script>
 </head>
 <body>
+  <h1>Loyalty Form</h1>
+  <div class="loader"></div>
   <p>Loading application...</p>
+  <div class="info">
+    <p><strong>User ID:</strong> ${userId}</p>
+    <p><strong>EVSE ID:</strong> ${evseId}</p>
+    <p><strong>EVSE Reference:</strong> ${evseReference}</p>
+  </div>
 </body>
 </html>`;
       
