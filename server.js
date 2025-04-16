@@ -18,17 +18,21 @@ console.log('Server starting...');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Has JWT Secret:', !!JWT_SECRET);
 
-// Read your index.html file
-const indexPath = path.join(__dirname, 'dist', 'index.html');
-let indexHtml;
+// Check if we're in development or production mode
+const isDev = process.env.NODE_ENV === 'development';
+const distPath = path.join(__dirname, 'dist');
 
-try {
-  indexHtml = fs.readFileSync(indexPath, 'utf8');
-  console.log('Successfully loaded index.html');
-} catch (error) {
-  console.error('Error loading index.html:', error);
-  // Provide a fallback HTML if the file can't be read
-  indexHtml = `<!DOCTYPE html>
+// Function to read the index.html file
+const readIndexHtml = () => {
+  const indexPath = path.join(distPath, 'index.html');
+  try {
+    const html = fs.readFileSync(indexPath, 'utf8');
+    console.log('Successfully loaded index.html');
+    return html;
+  } catch (error) {
+    console.error('Error loading index.html:', error, 'Path:', indexPath);
+    // Provide a fallback HTML if the file can't be read
+    return `<!DOCTYPE html>
 <html>
 <head>
   <title>Error</title>
@@ -38,8 +42,13 @@ try {
 <body>
   <h1>Error loading application</h1>
   <p>The application could not be loaded. Please try again later.</p>
+  <p>Error details: ${error.message}</p>
+  <p>Current directory: ${__dirname}</p>
+  <p>Index path: ${indexPath}</p>
+  <p>Files in dist: ${fs.existsSync(distPath) ? fs.readdirSync(distPath).join(', ') : 'dist directory not found'}</p>
 </body>
 </html>`;
+  }
 }
 
 // Middleware to log all requests
@@ -51,6 +60,9 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
   try {
+    // Get the index.html content
+    const indexHtml = readIndexHtml();
+    
     // Get the X-Payload header (case insensitive)
     const xPayload = req.headers['x-payload'] || 
                     req.headers['X-Payload'] || 
@@ -96,7 +108,18 @@ app.get('/', (req, res) => {
 });
 
 // Serve static files from the dist directory
-app.use(express.static('dist'));
+app.use(express.static(distPath));
+
+// Fallback route for SPA - serve index.html for any other routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.url.startsWith('/api/')) {
+    return res.status(404).send('API endpoint not found');
+  }
+  
+  const indexHtml = readIndexHtml();
+  res.send(indexHtml);
+});
 
 // Handle 404s
 app.use((req, res) => {
