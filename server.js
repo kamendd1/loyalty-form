@@ -15,7 +15,7 @@ console.log('Environment:', process.env.NODE_ENV);
 console.log('Has JWT Secret:', !!JWT_SECRET);
 
 // Create a request handler function that works for both Express and serverless
-function handler(req, res) {
+async function handler(req, res) {
   // Log request details
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   
@@ -105,6 +105,7 @@ function handler(req, res) {
       let userId = '';
       let evseId = '';
       let firstName = '';
+      let lastName = '';
       let evseReference = '';
       
       // Handle different payload formats
@@ -121,6 +122,34 @@ function handler(req, res) {
         evseId = decodedPayload.evseId || '';
         firstName = decodedPayload.firstName || '';
         evseReference = decodedPayload.evseReference || '';
+      }
+      
+      // If we have a userId but no firstName, fetch user info
+      if (userId && !firstName) {
+        try {
+          const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
+          const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
+          
+          const response = await fetch(`${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${apiToken}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            firstName = userData.firstName || '';
+            lastName = userData.lastName || '';
+            console.log('Successfully fetched user info:', { firstName, lastName });
+          } else {
+            console.error('Failed to fetch user info:', response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching user info:', error);
+        }
       }
       
       // Create a complete HTML form with all styling embedded
@@ -236,7 +265,7 @@ function handler(req, res) {
       </div>
       
       <h1 id="formTitle">
-        ${firstName ? '<span class="greeting">Hi ' + firstName + ', </span>' : ''}
+        ${firstName ? `<span class="greeting">Hi ${firstName}${lastName ? ' ' + lastName : ''}, </span>` : ''}
         Enjoy lower KWh price while charging at our stores!
       </h1>
       
@@ -274,37 +303,7 @@ function handler(req, res) {
         evseReference: "${evseReference}"
       };
       
-      // Try to fetch user info if we have a userId but no firstName
-      const apiBaseUrl = API_BASE_URL;
-      const apiToken = API_TOKEN;
-      
-      if (userData.userId && !userData.firstName && apiBaseUrl && apiToken) {
-        fetch(apiBaseUrl + '/public-api/resources/users/v1.0/' + userData.userId, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer ' + apiToken,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        })
-        .then(response => {
-          if (!response.ok) throw new Error('API request failed');
-          return response.json();
-        })
-        .then(data => {
-          if (data && data.firstName) {
-            // Update the greeting with the fetched name
-            const greeting = document.createElement('span');
-            greeting.className = 'greeting';
-            greeting.textContent = 'Hi ' + data.firstName + ', ';
-            
-            const h1 = document.querySelector('h1');
-            if (h1.firstChild.nodeType === Node.TEXT_NODE) {
-              h1.insertBefore(greeting, h1.firstChild);
-            }
-          }
-        })
-        .catch(error => console.error('Error fetching user info:', error));
+      // No need to fetch user info in the client since we already have it from the server
       }
       
       // Form validation
