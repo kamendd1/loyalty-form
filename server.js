@@ -158,14 +158,14 @@ export default function handler(req, res) {
         sessionStorage.setItem('hasRedirected', 'true');
         console.log('Redirecting to React app with payload');
         // Redirect to the React app with the payload as a parameter
-        window.location.href = '/?payload=' + payloadParam;
+        window.location.href = '/index.html?payload=' + payloadParam;
       } else {
         // Already redirected, check if app is loaded
         if (!checkAppLoaded()) {
           console.log('App not loaded after redirect, showing error');
           // App not loaded, show error
           document.querySelector('.loader').style.display = 'none';
-          document.querySelector('p').innerHTML = 'App loading issue detected. <a href="/?payload=' + payloadParam + '">Click here</a> to try again.';
+          document.querySelector('p').innerHTML = 'App loading issue detected. <a href="/index.html?payload=' + payloadParam + '">Click here</a> to try again.';
         } else {
           console.log('App loaded successfully');
         }

@@ -12,7 +12,7 @@
   ],
   "routes": [
     {
-      "src": "^/(\\?payload=.*)",
+      "src": "/\\?payload=(.*)",
       "dest": "/dist/index.html"
     },
     {
@@ -34,6 +34,10 @@
     {
       "src": "/favicon.ico",
       "dest": "/dist/favicon.ico"
+    },
+    {
+      "src": "/dist/(.*)",
+      "dest": "/dist/$1"
     },
     {
       "src": "/(.*)",
