@@ -79,6 +79,17 @@ export default function handler(req, res) {
       const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
+      // Check if we're already at the React app URL with the payload
+      const isAlreadyAtReactApp = req.url.startsWith('/?payload=');
+      
+      if (isAlreadyAtReactApp) {
+        // We're already at the React app with the payload, so just pass through to the React app
+        // This is handled by Vercel's config to serve the React app at the root
+        res.statusCode = 200;
+        res.end();
+        return;
+      }
+      
       // Create a simple loading page that redirects to the React app
       const html = `<!DOCTYPE html>
 <html>
@@ -100,20 +111,43 @@ export default function handler(req, res) {
   <p>You'll be redirected to the form in a moment...</p>
   
   <script>
-    // Redirect to the React app with the payload as a URL parameter
-    setTimeout(function() {
-      // Only add the payload parameter if it's not already in the URL
-      const currentUrl = new URL(window.location.href);
-      const params = new URLSearchParams(currentUrl.search);
+    // One-time redirect to the React app with the payload as a URL parameter
+    // Set a flag in sessionStorage to prevent redirect loops
+    const hasRedirected = sessionStorage.getItem('hasRedirected');
+    
+    if (!hasRedirected) {
+      // Mark that we've done the redirect
+      sessionStorage.setItem('hasRedirected', 'true');
       
-      // If we already have the payload in the URL and we're at the root path, don't redirect again
-      if (params.has('payload') && currentUrl.pathname === '/') {
-        console.log('Already at the correct URL with payload');
-      } else {
+      setTimeout(function() {
         // Redirect to the root with the payload
         window.location.href = "/?payload=${encodeURIComponent(xPayload)}";
-      }
-    }, 1500);
+      }, 1500);
+    } else {
+      // We've already redirected once, show a message
+      document.querySelector('.loader').style.display = 'none';
+      document.querySelector('p').textContent = 'Redirect loop detected. Please refresh the page or click the button below.';
+      
+      // Add a button to try again
+      const button = document.createElement('button');
+      button.textContent = 'Continue to Form';
+      button.style.padding = '10px 20px';
+      button.style.margin = '20px auto';
+      button.style.display = 'block';
+      button.style.backgroundColor = '#00E9A3';
+      button.style.border = 'none';
+      button.style.borderRadius = '5px';
+      button.style.color = 'white';
+      button.style.cursor = 'pointer';
+      
+      button.onclick = function() {
+        // Clear the flag and try again
+        sessionStorage.removeItem('hasRedirected');
+        window.location.href = "/?payload=${encodeURIComponent(xPayload)}";
+      };
+      
+      document.body.appendChild(button);
+    }
   </script>
 </body>
 </html>`;
