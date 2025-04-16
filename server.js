@@ -137,7 +137,19 @@ export default function handler(req, res) {
     
     // Redirect to the React app after a short delay
     setTimeout(function() {
-      window.location.href = '/app';
+      // Check if we've already redirected to avoid loops
+      const hasRedirected = sessionStorage.getItem('hasRedirected');
+      
+      if (!hasRedirected) {
+        // Mark that we've redirected
+        sessionStorage.setItem('hasRedirected', 'true');
+        // Redirect to the root with the payload parameter
+        window.location.href = '/?payload=${encodeURIComponent(xPayload)}';
+      } else {
+        // Already redirected, show error
+        document.querySelector('.loader').style.display = 'none';
+        document.querySelector('p').innerHTML = 'Redirect issue detected. <a href="/?payload=${encodeURIComponent(xPayload)}">Click here</a> to continue.';
+      }
     }, 1500);
   </script>
 </body>
