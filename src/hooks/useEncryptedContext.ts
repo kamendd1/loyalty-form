@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { decryptPayload } from '../utils/crypto';
+import { decryptPayload } from '../utils/crypto'; // Keep for backward compatibility
+import { decodeJwtPayload } from '../utils/jwtCrypto'; // Only import what we use
 import { FormPayload } from '../types/payload';
 import Logger from '../utils/logger';
 
@@ -9,7 +10,6 @@ const DEV_MOCK_DATA: FormPayload = {
   evseId: 'DEV_EVSE_001',
   operatorId: 'DEV_OPERATOR_001',
   appLanguage: 'en',
-  loyaltyNumber: '1234567',
   firstName: 'John'
 };
 
@@ -22,6 +22,11 @@ export const useEncryptedContext = () => {
   useEffect(() => {
     // Log on mount
     console.log('useEncryptedContext mounted');
+    Logger.info('useEncryptedContext mounted', {
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      timestamp: new Date().toISOString()
+    });
     
     const readEncryptedContext = () => {
       try {
@@ -29,12 +34,26 @@ export const useEncryptedContext = () => {
         console.log('Reading meta tag...');
         const metaTag = document.querySelector('meta[name="encrypted-context"]');
         console.log('Meta tag found:', !!metaTag);
+        Logger.info('Meta tag check', {
+          found: !!metaTag,
+          attributes: metaTag ? Array.from(metaTag.attributes).map(attr => `${attr.name}=${attr.value}`).join(', ') : 'none'
+        });
         
         const encryptedData = metaTag?.getAttribute('content');
         console.log('Meta tag content:', {
           hasContent: !!encryptedData,
           length: encryptedData?.length,
           preview: encryptedData ? encryptedData.substring(0, 20) + '...' : 'none'
+        });
+        
+        // Log all meta tags for debugging
+        const allMetaTags = document.querySelectorAll('meta');
+        Logger.info('All meta tags', {
+          count: allMetaTags.length,
+          tags: Array.from(allMetaTags).map(tag => ({
+            name: tag.getAttribute('name') || tag.getAttribute('property') || 'unnamed',
+            content: tag.getAttribute('content')?.substring(0, 30) + '...' || 'no-content'
+          }))
         });
         
         // Log initialization state
@@ -47,6 +66,16 @@ export const useEncryptedContext = () => {
           userAgent: navigator.userAgent
         });
 
+        // Check if we're being loaded from a mobile app using user agent
+        const isMobileUserAgent = /android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+        Logger.info('Mobile detection', {
+          userAgent: navigator.userAgent,
+          isMobileUserAgent,
+          hasMetaTag: !!metaTag,
+          hasEncryptedData: !!encryptedData,
+          referrer: document.referrer
+        });
+        
         // Only set as mobile app if we have both meta tag and encrypted data
         setIsFromMobileApp(!!metaTag && !!encryptedData);
 
@@ -60,17 +89,43 @@ export const useEncryptedContext = () => {
 
         // If we have encrypted data, try to decrypt it
         if (encryptedData) {
-          Logger.info('Found encrypted context data');
+          Logger.info('Found encrypted context data', {
+            dataLength: encryptedData.length,
+            dataPreview: encryptedData.substring(0, 30) + '...',
+            isBase64Looking: /^[A-Za-z0-9+/=]+$/.test(encryptedData),
+            isJwtFormat: /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(encryptedData)
+          });
+          
+          // First try JWT decoding (new method)
           try {
+            Logger.info('Attempting JWT decoding first');
+            const jwtData = decodeJwtPayload(encryptedData) as FormPayload;
+            if (jwtData) {
+              Logger.info('Successfully decoded JWT context', {
+                fields: Object.keys(jwtData)
+              });
+              setContextData(jwtData);
+              return; // Exit early if JWT decoding succeeds
+            }
+          } catch (jwtError) {
+            Logger.warn('JWT decoding failed, falling back to legacy decryption', {
+              error: jwtError instanceof Error ? jwtError.message : String(jwtError)
+            });
+            // Continue to legacy decryption method
+          }
+          
+          // Fallback to legacy AES decryption
+          try {
+            Logger.info('Attempting legacy AES decryption');
             const decryptedData = decryptPayload(encryptedData) as FormPayload;
             if (decryptedData) {
-              Logger.info('Successfully loaded context', {
+              Logger.info('Successfully loaded context via legacy decryption', {
                 fields: Object.keys(decryptedData)
               });
               setContextData(decryptedData);
             }
           } catch (decryptError) {
-            Logger.error('Failed to decrypt context', decryptError, {
+            Logger.error('All decryption methods failed', decryptError as Error, {
               isMobileApp: !!metaTag
             });
             // Don't set error if we're not in mobile app

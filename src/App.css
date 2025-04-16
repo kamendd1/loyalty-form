@@ -122,6 +122,12 @@ form {
   margin-bottom: 0.5rem;
 }
 
+.add-logo-form {
+  width: 100%;
+  max-width: 349px;
+  margin: 0 auto;
+}
+
 .logo {
   height: 160px;
   width: auto;
@@ -203,6 +209,11 @@ input.error {
   text-align: left;
   width: 100%;
   max-width: 349px;
+}
+
+.input-help.url-preview {
+  color: #007bff;
+  font-weight: 500;
 }
 
 .submit-button {
