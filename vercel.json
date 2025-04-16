@@ -4,41 +4,9 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "dist/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
-    {
-      "src": "/\\?payload=(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "^/$",
-      "dest": "/dist/index.html"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/dist/assets/$1"
-    },
-    {
-      "src": "/images/(.*)",
-      "dest": "/dist/images/$1"
-    },
-    {
-      "src": "/vite.svg",
-      "dest": "/dist/vite.svg"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/dist/favicon.ico"
-    },
-    {
-      "src": "/dist/(.*)",
-      "dest": "/dist/$1"
-    },
     {
       "src": "/(.*)",
       "dest": "/server.js"
