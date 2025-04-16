@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Debug Page</title>
+</head>
+<body>
+  <h1>Debug Information</h1>
+  <div id="meta-tags"></div>
+  <script>
+    // Display all meta tags
+    const metaTags = document.querySelectorAll('meta');
+    const metaTagsDiv = document.getElementById('meta-tags');
+    
+    metaTagsDiv.innerHTML = '<h2>Meta Tags</h2>';
+    if (metaTags.length === 0) {
+      metaTagsDiv.innerHTML += '<p>No meta tags found</p>';
+    } else {
+      const list = document.createElement('ul');
+      metaTags.forEach(tag => {
+        const item = document.createElement('li');
+        item.textContent = `${tag.getAttribute('name') || tag.getAttribute('property') || 'unnamed'}: ${tag.getAttribute('content') || 'no content'}`;
+        list.appendChild(item);
+      });
+      metaTagsDiv.appendChild(list);
+    }
+    
+    // Add URL info
+    const urlInfo = document.createElement('div');
+    urlInfo.innerHTML = `
+      <h2>URL Information</h2>
+      <p>URL: ${window.location.href}</p>
+      <p>Referrer: ${document.referrer}</p>
+      <p>User Agent: ${navigator.userAgent}</p>
+    `;
+    document.body.appendChild(urlInfo);
+  </script>
+</body>
+</html>
