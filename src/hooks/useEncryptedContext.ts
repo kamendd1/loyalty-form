@@ -18,8 +18,6 @@ export const useEncryptedContext = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFromMobileApp, setIsFromMobileApp] = useState(false);
-  
-  // Add additional user-friendly information
   const [userName, setUserName] = useState<string>('');
   const [evseReference, setEvseReference] = useState<string>('');
 
@@ -181,6 +179,7 @@ export const useEncryptedContext = () => {
             });
             
             setContextData(extractedData);
+            setIsLoading(false);
             return; // Exit early if JWT decoding succeeds
           } catch (jwtError) {
             Logger.warn('JWT decoding failed, falling back to legacy decryption', {
@@ -212,7 +211,7 @@ export const useEncryptedContext = () => {
           Logger.info('No encrypted data found, proceeding without context');
         }
       } catch (err) {
-        Logger.error('Context processing error', err, {
+        Logger.error('Context processing error', err as Error, {
           hasMetaTag: !!document.querySelector('meta[name="encrypted-context"]')
         });
         // Only set error if we're supposed to have context

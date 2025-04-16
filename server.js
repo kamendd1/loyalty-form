@@ -160,60 +160,45 @@ export default function handler(req, res) {
       const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
       const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
       
-      // Create a complete HTML page with the application embedded
+      // Get the current hostname to avoid hardcoding the redirect URL
+      const currentHost = req.headers.host || 'loyalty-form.vercel.app';
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      
+      // Create a simple HTML page with the payload as a meta tag
       const html = `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Loyalty Form</title>
-  
-  <!-- Embed the payload as a meta tag for the application to read -->
   <meta name="encrypted-context" content='${payloadString}' />
-  
-  <!-- Add some basic styling for the loading screen -->
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    #app-loading { text-align: center; padding: 2rem; }
-    .user-info { background: #f5f5f5; padding: 1rem; border-radius: 5px; margin: 1rem 0; display: inline-block; text-align: left; }
-    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 1rem auto; }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .info { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: left; }
+    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 20px auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    #root { padding: 1rem; }
   </style>
 </head>
 <body>
-  <!-- Loading screen that will be replaced by the React app -->
-  <div id="app-loading">
-    <h1>Loyalty Form</h1>
-    <div class="loader"></div>
-    <p>Loading application...</p>
-    <div class="user-info">
-      <p><strong>User ID:</strong> ${userId}</p>
-      <p><strong>EVSE ID:</strong> ${evseId}</p>
-      <p><strong>EVSE Reference:</strong> ${evseReference}</p>
-    </div>
+  <h1>Loyalty Form</h1>
+  <div class="loader"></div>
+  <p>Processing your request...</p>
+  
+  <div class="info">
+    <h2>Request Information</h2>
+    <p><strong>User ID:</strong> ${userId}</p>
+    <p><strong>EVSE ID:</strong> ${evseId}</p>
+    <p><strong>EVSE Reference:</strong> ${evseReference}</p>
   </div>
   
-  <!-- Root element for React to mount -->
-  <div id="root"></div>
+  <p>This page will automatically redirect you to the application.</p>
   
-  <!-- Include the application scripts -->
   <script>
-    // This will hide the loading screen once the app is loaded
-    window.addEventListener('load', function() {
-      const appLoading = document.getElementById('app-loading');
-      if (appLoading) {
-        setTimeout(function() {
-          appLoading.style.display = 'none';
-        }, 1000);
-      }
-    });
+    // Redirect to the main app with the payload as a URL parameter after a short delay
+    setTimeout(function() {
+      window.location.href = "${protocol}://${currentHost}/?payload=${encodeURIComponent(xPayload)}";
+    }, 2000);
   </script>
-  
-  <!-- Include your application's JavaScript and CSS -->
-  <script type="module" crossorigin src="/assets/index-CwYl2miS.js"></script>
-  <link rel="stylesheet" href="/assets/index-BN_SKaEV.css">
 </body>
 </html>`;
       
