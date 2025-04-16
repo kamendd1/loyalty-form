@@ -15,8 +15,8 @@ const DEV_MOCK_DATA: FormPayload = {
 };
 
 // API configuration - these should be provided by the environment or configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
-const API_TOKEN = process.env.REACT_APP_API_TOKEN || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_TOKEN = import.meta.env.VITE_API_TOKEN || '';
 
 export const useEncryptedContext = () => {
   const [contextData, setContextData] = useState<FormPayload>({});
@@ -49,7 +49,54 @@ export const useEncryptedContext = () => {
         // Also check the encrypted-context meta tag for backward compatibility
         const metaTag = document.querySelector('meta[name="encrypted-context"]');
         
-        // Try to get the payload from various sources
+        // First, check for pre-decoded payload from server.js
+        const decodedPayloadJson = sessionStorage.getItem('decoded_payload');
+        if (decodedPayloadJson) {
+          try {
+            console.log('Found pre-decoded payload in sessionStorage');
+            const decodedData = JSON.parse(decodedPayloadJson);
+            console.log('Pre-decoded payload:', decodedData);
+            
+            // Extract user information directly from the decoded payload
+            let extractedData: FormPayload = {};
+            
+            // Check for nested payload structure
+            if (decodedData.payload && typeof decodedData.payload === 'object') {
+              console.log('Using nested payload structure from pre-decoded data');
+              
+              if (decodedData.payload.parameters) {
+                extractedData = {
+                  userId: String(decodedData.payload.parameters.userId || ''),
+                  evseId: String(decodedData.payload.parameters.evseId || ''),
+                  firstName: decodedData.payload.parameters.firstName || ''
+                };
+                
+                if (decodedData.payload.parameters.evsePhysicalReference) {
+                  setEvseReference(String(decodedData.payload.parameters.evsePhysicalReference));
+                }
+              }
+            }
+            
+            // Set user name
+            setUserName(extractedData.firstName || 'User');
+            
+            // Set context data
+            setContextData(extractedData);
+            setIsLoading(false);
+            
+            // If we have a userId but no firstName, fetch user info from API
+            if (extractedData.userId && !extractedData.firstName && API_BASE_URL && API_TOKEN) {
+              fetchUserInfoFromApi(extractedData.userId);
+            }
+            
+            return; // Exit early since we have the decoded data
+          } catch (parseError) {
+            console.error('Error parsing pre-decoded payload:', parseError);
+            // Fall through to regular decoding methods
+          }
+        }
+        
+        // If we don't have pre-decoded payload, try to get encrypted data from various sources
         let encryptedData = null;
         
         // 1. Check URL parameters first (most reliable for WebView)
@@ -66,7 +113,16 @@ export const useEncryptedContext = () => {
                        payloadParam === urlParams.get('token') ? 'token' : 'x-payload'
           });
         }
-        // 2. Check meta tags
+        // 2. Check sessionStorage (set by server.js)
+        else if (sessionStorage.getItem('jwt_payload')) {
+          encryptedData = sessionStorage.getItem('jwt_payload');
+          console.log('Found payload in sessionStorage:', !!encryptedData);
+          Logger.info('Found payload in sessionStorage', {
+            hasContent: !!encryptedData,
+            contentLength: encryptedData?.length
+          });
+        }
+        // 3. Check meta tags
         else if (xPayloadMeta) {
           encryptedData = xPayloadMeta.getAttribute('content');
           console.log('Found X-Payload meta tag:', !!encryptedData);
@@ -142,58 +198,88 @@ export const useEncryptedContext = () => {
             isJwtFormat: /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(encryptedData)
           });
           
-          // First try JWT decoding (new method)
+          // First try JWT decoding
           try {
-            Logger.info('Attempting JWT decoding first');
-            const jwtData = decodeJwtPayload(encryptedData) as any;
+            Logger.info('Attempting JWT decoding');
+            const jwtData = decodeJwtPayload(encryptedData);
             
-            // Extract user information from the JWT payload
-            let extractedData: FormPayload = {};
-            
-            // Check if this is the new format with nested payload
-            if (jwtData.payload && typeof jwtData.payload === 'object') {
-              Logger.info('Found nested payload structure', {
-                payloadType: jwtData.payload.type,
-                hasParameters: !!jwtData.payload.parameters
+            if (jwtData) {
+              // Log the full JWT data for debugging
+              console.log('Decoded JWT data:', jwtData);
+              Logger.info('JWT data structure', {
+                keys: Object.keys(jwtData),
+                hasPayload: !!jwtData.payload,
+                payloadType: jwtData.payload?.type
               });
               
-              // Extract user information from the parameters
-              if (jwtData.payload.parameters) {
+              let extractedData: FormPayload = {};
+              
+              // Check if it has a nested payload structure (new format)
+              if (jwtData.payload && typeof jwtData.payload === 'object') {
+                Logger.info('Detected nested payload structure', {
+                  payloadType: jwtData.payload.type,
+                  hasParameters: !!jwtData.payload.parameters
+                });
+                
+                // Extract from nested parameters
+                if (jwtData.payload.parameters) {
+                  console.log('Parameters found:', jwtData.payload.parameters);
+                  
+                  // Convert numeric IDs to strings to ensure type safety
+                  extractedData = {
+                    userId: String(jwtData.payload.parameters.userId || ''),
+                    evseId: String(jwtData.payload.parameters.evseId || ''),
+                    firstName: jwtData.payload.parameters.firstName || ''
+                  };
+                  
+                  // Set the EVSE reference if available
+                  if (jwtData.payload.parameters.evsePhysicalReference) {
+                    setEvseReference(String(jwtData.payload.parameters.evsePhysicalReference));
+                  }
+                }
+              } else if (jwtData.parameters && typeof jwtData.parameters === 'object') {
+                // Alternative structure where parameters might be at the top level
+                console.log('Top-level parameters found:', jwtData.parameters);
+                
                 extractedData = {
-                  userId: jwtData.payload.parameters.userId?.toString(),
-                  evseId: jwtData.payload.parameters.evseId?.toString(),
-                  firstName: jwtData.payload.parameters.firstName || 'User'
+                  userId: String(jwtData.parameters.userId || ''),
+                  evseId: String(jwtData.parameters.evseId || ''),
+                  firstName: jwtData.parameters.firstName || ''
                 };
                 
-                // Set the EVSE reference if available
-                if (jwtData.payload.parameters.evsePhysicalReference) {
-                  setEvseReference(jwtData.payload.parameters.evsePhysicalReference);
+                if (jwtData.parameters.evsePhysicalReference) {
+                  setEvseReference(String(jwtData.parameters.evsePhysicalReference));
                 }
+              } else {
+                // Last resort: try direct mapping
+                console.log('Using direct mapping as fallback');
+                extractedData = {
+                  userId: String(jwtData.userId || ''),
+                  evseId: String(jwtData.evseId || ''),
+                  firstName: jwtData.firstName || ''
+                };
               }
-            } else {
-              // Assume direct mapping for backward compatibility
-              extractedData = jwtData as FormPayload;
+              
+              // Set user name from firstName or default to 'User'
+              setUserName(extractedData.firstName || 'User');
+              
+              Logger.info('Successfully decoded JWT context', {
+                fields: Object.keys(extractedData),
+                userName: extractedData.firstName || 'User',
+                evseId: extractedData.evseId,
+                userId: extractedData.userId
+              });
+              
+              setContextData(extractedData);
+              setIsLoading(false);
+              
+              // If we have a userId but no firstName, fetch user info from API
+              if (extractedData.userId && !extractedData.firstName && API_BASE_URL && API_TOKEN) {
+                fetchUserInfoFromApi(extractedData.userId);
+              }
+              
+              return; // Exit early if JWT decoding succeeds
             }
-            
-            // Set user name from firstName or default to 'User'
-            setUserName(extractedData.firstName || 'User');
-            
-            Logger.info('Successfully decoded JWT context', {
-              fields: Object.keys(extractedData),
-              userName: extractedData.firstName || 'User',
-              evseId: extractedData.evseId,
-              userId: extractedData.userId
-            });
-            
-            setContextData(extractedData);
-            setIsLoading(false);
-            
-            // If we have a userId but no firstName, fetch user info from API
-            if (extractedData.userId && !extractedData.firstName && API_BASE_URL && API_TOKEN) {
-              fetchUserInfoFromApi(extractedData.userId);
-            }
-            
-            return; // Exit early if JWT decoding succeeds
           } catch (jwtError) {
             Logger.warn('JWT decoding failed, falling back to legacy decryption', {
               error: jwtError instanceof Error ? jwtError.message : String(jwtError)

@@ -12,7 +12,11 @@
   ],
   "routes": [
     {
-      "src": "^/\\?payload=.*$",
+      "src": "^/(\\?payload=.*)",
+      "dest": "/dist/index.html"
+    },
+    {
+      "src": "^/$",
       "dest": "/dist/index.html"
     },
     {

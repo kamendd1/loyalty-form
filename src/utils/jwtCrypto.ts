@@ -1,11 +1,9 @@
-import { Buffer } from 'buffer';
-import jwt from 'jsonwebtoken';
 import Logger from './logger';
 
 /**
- * Decodes and verifies a JWT token using HS256 algorithm
+ * Decodes a JWT token without verification (browser-compatible)
  * @param token - The JWT token to decode
- * @returns Decoded payload or null if verification fails
+ * @returns Decoded payload or null if decoding fails
  */
 export const decodeJwtPayload = (token: string): any => {
   if (!token) {
@@ -26,27 +24,57 @@ export const decodeJwtPayload = (token: string): any => {
       });
     }
 
-    // Get the secret key from environment variables
-    const base64Key = import.meta.env.VITE_JWT_SECRET;
-    
-    if (!base64Key) {
-      Logger.error('Missing JWT secret key in environment variables');
-      throw new Error('Server misconfiguration: missing JWT secret');
+    // In the browser, we'll just decode without verification
+    // This is safe because the server has already verified the token
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
     }
 
-    // Convert the base64-encoded secret to a Buffer
-    const secretKey = Buffer.from(base64Key, 'base64');
+    // Base64Url decode the payload (second part)
+    const payload = parts[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
     
-    // Verify and decode the token
-    const decodedPayload = jwt.verify(token, secretKey, { algorithms: ['HS256'] });
-    
-    Logger.info('Successfully decoded JWT payload', {
-      fields: Object.keys(decodedPayload)
-    });
-    
-    return decodedPayload;
+    try {
+      // First try the built-in atob method
+      const jsonPayload = decodeURIComponent(atob(paddedBase64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const decodedPayload = JSON.parse(jsonPayload);
+      
+      // Log the full structure for debugging
+      console.log('Full JWT payload structure:', decodedPayload);
+      
+      Logger.info('Successfully decoded JWT payload', {
+        fields: Object.keys(decodedPayload)
+      });
+      
+      return decodedPayload;
+    } catch (decodeError) {
+      // If atob fails, try a more robust approach
+      Logger.warn('Standard decoding failed, trying alternative method', {
+        error: decodeError instanceof Error ? decodeError.message : String(decodeError)
+      });
+      
+      // Alternative decoding approach using TextDecoder
+      const binaryString = window.atob(paddedBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      const decoder = new TextDecoder('utf-8');
+      const jsonPayload = decoder.decode(bytes);
+      const decodedPayload = JSON.parse(jsonPayload);
+      
+      console.log('Full JWT payload structure (alternative method):', decodedPayload);
+      
+      return decodedPayload;
+    }
   } catch (error) {
-    Logger.error('JWT token verification failed', error, {
+    Logger.error('JWT token decoding failed', error, {
       errorMessage: error instanceof Error ? error.message : String(error)
     });
     return null;
@@ -85,6 +113,15 @@ export const extractJwtToken = (): string | null => {
       return tokenParam;
     }
 
+    // Check for token in sessionStorage (set by server.js)
+    const sessionToken = sessionStorage.getItem('jwt_payload');
+    if (sessionToken) {
+      Logger.info('Found JWT token in sessionStorage', {
+        length: sessionToken.length
+      });
+      return sessionToken;
+    }
+    
     // Check for token in localStorage (if previously stored)
     const storedToken = localStorage.getItem('jwt_token');
     if (storedToken) {

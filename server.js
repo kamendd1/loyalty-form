@@ -86,7 +86,7 @@ export default function handler(req, res) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Redirecting to Loyalty Form</title>
-  <meta name="encrypted-context" content='${JSON.stringify(decodedPayload).replace(/'/g, "\\'")}'/>
+  <meta name="encrypted-context" content='${JSON.stringify(decodedPayload).replace(/'/g, "\'")}'/>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
@@ -132,8 +132,21 @@ export default function handler(req, res) {
     <p>You'll be redirected to the form in a moment...</p>
   </div>
   <script>
-    // Store the payload in sessionStorage to make it available to the React app
+    // Store both the raw JWT payload and the decoded payload
     sessionStorage.setItem('jwt_payload', '${xPayload}');
+    // Store the decoded payload as JSON so the React app doesn't need to decode it again
+    sessionStorage.setItem('decoded_payload', '${JSON.stringify(decodedPayload).replace(/'/g, "\'")}')
+    // Also prepare it as a URL parameter
+    const payloadParam = encodeURIComponent('${xPayload}');
+    
+    // Function to check if the app is loaded
+    function checkAppLoaded() {
+      const rootElement = document.getElementById('root');
+      return rootElement && rootElement.childElementCount > 0;
+    }
+    
+    // Log what we're doing for debugging
+    console.log('Preparing to redirect to React app');
     
     // Redirect to the React app after a short delay
     setTimeout(function() {
@@ -143,12 +156,19 @@ export default function handler(req, res) {
       if (!hasRedirected) {
         // Mark that we've redirected
         sessionStorage.setItem('hasRedirected', 'true');
-        // Redirect to the root with the payload parameter
-        window.location.href = '/?payload=${encodeURIComponent(xPayload)}';
+        console.log('Redirecting to React app with payload');
+        // Redirect to the React app with the payload as a parameter
+        window.location.href = '/?payload=' + payloadParam;
       } else {
-        // Already redirected, show error
-        document.querySelector('.loader').style.display = 'none';
-        document.querySelector('p').innerHTML = 'Redirect issue detected. <a href="/?payload=${encodeURIComponent(xPayload)}">Click here</a> to continue.';
+        // Already redirected, check if app is loaded
+        if (!checkAppLoaded()) {
+          console.log('App not loaded after redirect, showing error');
+          // App not loaded, show error
+          document.querySelector('.loader').style.display = 'none';
+          document.querySelector('p').innerHTML = 'App loading issue detected. <a href="/?payload=' + payloadParam + '">Click here</a> to try again.';
+        } else {
+          console.log('App loaded successfully');
+        }
       }
     }, 1500);
   </script>
