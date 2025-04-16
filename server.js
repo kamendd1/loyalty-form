@@ -3,6 +3,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 
 // Set up __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -15,10 +16,53 @@ const PORT = process.env.PORT || 3000;
 // Get JWT secret from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
 
+// Path to the dist directory
+const distPath = path.join(__dirname, 'dist');
+
+// Function to find the main JS file (with hash in filename)
+function findMainJsFile() {
+  try {
+    if (!fs.existsSync(path.join(distPath, 'assets'))) {
+      console.error('Assets directory not found');
+      return 'index.js'; // Fallback
+    }
+    
+    const files = fs.readdirSync(path.join(distPath, 'assets'));
+    const mainJsFile = files.find(file => file.startsWith('index-') && file.endsWith('.js'));
+    return mainJsFile || 'index.js';
+  } catch (error) {
+    console.error('Error finding main JS file:', error);
+    return 'index.js'; // Fallback
+  }
+}
+
+// Find the main CSS file
+function findMainCssFile() {
+  try {
+    if (!fs.existsSync(path.join(distPath, 'assets'))) {
+      console.error('Assets directory not found');
+      return 'index.css'; // Fallback
+    }
+    
+    const files = fs.readdirSync(path.join(distPath, 'assets'));
+    const mainCssFile = files.find(file => file.endsWith('.css'));
+    return mainCssFile || 'index.css';
+  } catch (error) {
+    console.error('Error finding main CSS file:', error);
+    return 'index.css'; // Fallback
+  }
+}
+
+// Get the main JS and CSS files
+const mainJsFile = findMainJsFile();
+const mainCssFile = findMainCssFile();
+
 // Log startup information
 console.log('Server starting with ES modules...');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Has JWT Secret:', !!JWT_SECRET);
+console.log('Main JS file:', mainJsFile);
+console.log('Main CSS file:', mainCssFile);
 
 // Basic error HTML template
 const errorHtml = `<!DOCTYPE html>
@@ -56,6 +100,7 @@ app.get('/', (req, res) => {
   <title>Loyalty Form</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/assets/${mainCssFile}">
   <script>
     // This is a static placeholder. Your app will load and read the payload from the URL.
     console.log('Loading application with payload in URL');
@@ -63,7 +108,7 @@ app.get('/', (req, res) => {
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/assets/index.js"></script>
+  <script type="module" src="/assets/${mainJsFile}"></script>
 </body>
 </html>`;
       return res.send(html);
@@ -91,10 +136,11 @@ app.get('/', (req, res) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="encrypted-context" content='${payloadString}' />
+  <link rel="stylesheet" href="/assets/${mainCssFile}">
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/assets/index.js"></script>
+  <script type="module" src="/assets/${mainJsFile}"></script>
 </body>
 </html>`;
         
@@ -114,9 +160,40 @@ app.get('/', (req, res) => {
   }
 });
 
+// Serve static files from the dist directory
+app.use(express.static(distPath));
+
+// Catch-all route for SPA navigation
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.url.startsWith('/api/')) {
+    return res.status(404).send('API endpoint not found');
+  }
+  
+  // For all other routes, serve the index.html with the correct JS/CSS references
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Loyalty Form</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/assets/${mainCssFile}">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/assets/${mainJsFile}"></script>
+</body>
+</html>`;
+  
+  res.send(html);
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Server is serving static files from: ${distPath}`);
+  console.log(`Main JS file: /assets/${mainJsFile}`);
+  console.log(`Main CSS file: /assets/${mainCssFile}`);
 });
 
 // Export the app for serverless use
