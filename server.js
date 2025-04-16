@@ -1,7 +1,5 @@
 // Serverless function for Vercel
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
-import path from 'path';
 
 // Get JWT secret from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
@@ -35,85 +33,29 @@ export default function handler(req, res) {
     const urlParams = req.url.includes('?') ? new URLSearchParams(req.url.split('?')[1]) : new URLSearchParams();
     const xPayload = req.headers['x-payload'] || req.headers['X-Payload'] || urlParams.get('payload');
     
-    // Check if this is a redirected request (has payload in URL and no X-Payload header)
-    const isRedirectedRequest = urlParams.has('payload') && !req.headers['x-payload'] && !req.headers['X-Payload'];
-    
-    console.log('Is redirected request:', isRedirectedRequest);
-    
-    // Even for redirected requests, we'll redirect to the React app's form page
-    if (isRedirectedRequest) {
-      console.log('This is a redirected request with payload in URL - redirecting to React app');
-      
-      try {
-        // Decode the JWT token to verify it's valid
-        const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
-        const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
-        console.log('Successfully decoded payload for redirected request');
-        
-        // Get the current hostname to avoid hardcoding the redirect URL
-        const currentHost = req.headers.host || 'loyalty-form.vercel.app';
-        const protocol = req.headers['x-forwarded-proto'] || 'https';
-        
-        // Create a simple HTML page that redirects to the React app
-        const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redirecting to Loyalty Form</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 800px; margin: 0 auto; }
-    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
-</head>
-<body>
-  <h1>Redirecting to Loyalty Form</h1>
-  <div class="loader"></div>
-  <p>You'll be redirected to the form page in a moment...</p>
-  
-  <script>
-    // Redirect immediately to the React app
-    window.location.href = "${protocol}://${currentHost}/?payload=${encodeURIComponent(xPayload)}";
-  </script>
-</body>
-</html>`;
-        
-        // Send the HTML response
-        res.setHeader('Content-Type', 'text/html');
-        res.statusCode = 200;
-        res.end(html);
-        return;
-      } catch (error) {
-        console.error('Error decoding JWT in redirected request:', error);
-      }
-    }
-    
-    // If this is a direct browser access without a payload, show a test page
+    // If no payload is provided, show the default page
     if (!xPayload) {
-      console.log('No X-Payload header found - showing test page');
-      
-      // Create a test page with instructions
+      // Create a simple HTML page with instructions
       const html = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Loyalty Form - Test Page</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loyalty Form Server</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
     h1 { color: #333; }
     pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
-    .note { background: #fffde7; padding: 10px; border-left: 4px solid #ffd600; margin: 20px 0; }
+    .note { background: #fffde7; padding: 15px; border-left: 4px solid #ffd600; margin: 20px 0; }
   </style>
 </head>
 <body>
-  <h1>Loyalty Form - Server is Running</h1>
-  <p>This server is designed to receive requests from the vendor's backend with an X-Payload header containing a JWT token.</p>
+  <h1>Loyalty Form Server</h1>
+  <p>This server is designed to receive requests with JWT tokens and display a loyalty form.</p>
   
   <div class="note">
     <p><strong>Note:</strong> You're seeing this page because you accessed the server directly in a browser without an X-Payload header.</p>
-    <p>In normal operation, this server will receive requests from the vendor's backend, decode the JWT token, and redirect to the main application.</p>
+    <p>In normal operation, this server will receive requests from the vendor's backend with a JWT token.</p>
   </div>
   
   <h2>Test with a Sample JWT Token</h2>
@@ -129,6 +71,7 @@ export default function handler(req, res) {
       return;
     }
     
+    // We have a payload, so let's process it
     console.log('Received payload:', xPayload.substring(0, 30) + '...');
     
     try {
@@ -137,52 +80,104 @@ export default function handler(req, res) {
       const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
-      // Instead of redirecting, we'll embed the payload in a meta tag and serve the app directly
-      const payloadString = JSON.stringify(decodedPayload).replace(/'/g, "\\'");
-      
       // Extract User ID and EVSE ID from the payload if available
       const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
       const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
       const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
+      const firstName = decodedPayload.payload?.parameters?.firstName || '';
       
-      // Get the current hostname to avoid hardcoding the redirect URL
-      const currentHost = req.headers.host || 'loyalty-form.vercel.app';
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      
-      // Create a simple HTML page that redirects to the React app
+      // Serve a complete form directly without any redirects
       const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redirecting to Loyalty Form</title>
+  <title>Loyalty Form</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 800px; margin: 0 auto; }
-    .info { background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: left; }
-    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+    .form-card { padding: 20px; }
+    .logo-container { text-align: center; margin-bottom: 20px; }
+    .logo { max-width: 200px; height: auto; }
+    h1 { color: #333; margin-bottom: 20px; }
+    .greeting { color: #4CAF50; }
+    .context-info { margin-bottom: 20px; padding: 10px; background-color: #f0f0f0; border-radius: 4px; }
+    .input-group { margin-bottom: 20px; }
+    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    .input-help { font-size: 14px; color: #666; margin-top: 5px; }
+    .error-text { color: #d32f2f; }
+    .submit-button { width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    .submit-button:hover { background-color: #45a049; }
+    .submit-button:disabled { background-color: #cccccc; cursor: not-allowed; }
+    .success-message { display: none; text-align: center; padding: 20px; }
+    .success-message h3 { color: #4CAF50; margin-bottom: 10px; }
   </style>
 </head>
 <body>
-  <h1>Redirecting to Loyalty Form</h1>
-  <div class="loader"></div>
-  <p>Processing your request...</p>
-  
-  <div class="info">
-    <h2>Request Information</h2>
-    <p><strong>User ID:</strong> ${userId}</p>
-    <p><strong>EVSE ID:</strong> ${evseId}</p>
-    <p><strong>EVSE Reference:</strong> ${evseReference}</p>
+  <div class="container">
+    <div class="form-card">
+      <div class="logo-container">
+        <img src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" alt="Company Logo" class="logo">
+      </div>
+      
+      <h1>
+        ${firstName ? `<span class="greeting">Hi ${firstName}, </span>` : ''}
+        Enjoy lower KWh price while charging at our stores!
+      </h1>
+      
+      <div class="context-info">
+        <p><strong>Selected Charger:</strong> ${evseId}</p>
+        <p><strong>EVSE Reference:</strong> ${evseReference}</p>
+        <p><strong>User ID:</strong> ${userId}</p>
+      </div>
+      
+      <form id="loyaltyForm">
+        <div class="input-group">
+          <input type="text" id="loyaltyNumber" maxlength="7" pattern="\d*" inputmode="numeric" placeholder="">
+          <p class="input-help" id="inputHelp">Enter your loyalty card number</p>
+        </div>
+        
+        <button type="submit" class="submit-button" id="submitButton">Submit</button>
+      </form>
+      
+      <div id="successMessage" class="success-message">
+        <h3>Thank you!</h3>
+        <p>Your loyalty card number has been successfully submitted.</p>
+        <p>You will now receive discounted charging rates at our locations.</p>
+      </div>
+      
+      <script>
+        document.getElementById('loyaltyForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const loyaltyNumber = document.getElementById('loyaltyNumber').value;
+          const inputHelp = document.getElementById('inputHelp');
+          const submitButton = document.getElementById('submitButton');
+          
+          if (loyaltyNumber.length === 0) {
+            inputHelp.textContent = 'Please enter your loyalty card number';
+            inputHelp.className = 'input-help error-text';
+            return;
+          }
+          
+          if (!/^\d+$/.test(loyaltyNumber)) {
+            inputHelp.textContent = 'Please enter numbers only';
+            inputHelp.className = 'input-help error-text';
+            return;
+          }
+          
+          if (loyaltyNumber.length < 7) {
+            inputHelp.textContent = 'Please enter a 7-digit card number';
+            inputHelp.className = 'input-help error-text';
+            return;
+          }
+          
+          // Show success message
+          document.getElementById('loyaltyForm').style.display = 'none';
+          document.getElementById('successMessage').style.display = 'block';
+        });
+      </script>
+    </div>
   </div>
-  
-  <p>You'll be redirected to the form page in a moment...</p>
-  
-  <script>
-    // Redirect to the form page with the payload as a URL parameter after a short delay
-    setTimeout(function() {
-      window.location.href = "${protocol}://${currentHost}/?payload=${encodeURIComponent(xPayload)}";
-    }, 1000); // Reduced delay to 1 second
-  </script>
 </body>
 </html>`;
       
