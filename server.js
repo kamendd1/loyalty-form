@@ -1,7 +1,8 @@
 // Server implementation for both Vercel and local development
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import express from 'express';
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+const fetch = require('node-fetch');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -129,6 +130,10 @@ async function handler(req, res) {
         try {
           const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
           const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
+          
+          console.log('Attempting to fetch user info for userId:', userId);
+          console.log('API Base URL:', apiBaseUrl);
+          console.log('Has API Token:', !!apiToken);
           
           const response = await fetch(`${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`, {
             method: 'GET',

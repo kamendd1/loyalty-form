@@ -13,6 +13,8 @@
     }
   ],
   "env": {
-    "JWT_SECRET": "2OX3B8tIoL1swIqN5yacTCV74037VhTgmtIsHtn3zGg="
+    "JWT_SECRET": "2OX3B8tIoL1swIqN5yacTCV74037VhTgmtIsHtn3zGg=",
+    "API_BASE_URL": "https://api.alokai.com",
+    "API_TOKEN": "@api_token"
   }
 }
