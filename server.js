@@ -2,10 +2,17 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
-const fetch = require('node-fetch');
 
 // Load environment variables from .env file
 dotenv.config();
+
+// Import node-fetch
+let fetch;
+if (!globalThis.fetch) {
+  fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+} else {
+  fetch = globalThis.fetch;
+}
 
 // Get JWT secret from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
@@ -135,7 +142,10 @@ async function handler(req, res) {
           console.log('API Base URL:', apiBaseUrl);
           console.log('Has API Token:', !!apiToken);
           
-          const response = await fetch(`${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`, {
+          // Get the fetch function
+          const fetchFn = !globalThis.fetch ? (await import('node-fetch')).default : fetch;
+          
+          const response = await fetchFn(`${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${apiToken}`,
