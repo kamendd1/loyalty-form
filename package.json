@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "node server.js",
+    "server": "node api/server.js",
     "start": "npm run build && npm run server"
   },
   "dependencies": {

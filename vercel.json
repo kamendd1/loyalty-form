@@ -1,16 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node"
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
-    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/server.js" }
   ],
   "env": {
     "JWT_SECRET": "2OX3B8tIoL1swIqN5yacTCV74037VhTgmtIsHtn3zGg=",
