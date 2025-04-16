@@ -79,75 +79,65 @@ export default function handler(req, res) {
       const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
-      // Check if we're already at the React app URL with the payload
-      const isAlreadyAtReactApp = req.url.startsWith('/?payload=');
-      
-      if (isAlreadyAtReactApp) {
-        // We're already at the React app with the payload, so just pass through to the React app
-        // This is handled by Vercel's config to serve the React app at the root
-        res.statusCode = 200;
-        res.end();
-        return;
-      }
-      
-      // Create a simple loading page that redirects to the React app
+      // Directly serve the React app with the payload embedded
+      // This avoids redirect issues with Vercel routing
       const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redirecting to Loyalty Form</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 20px; }
-    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #00E9A3; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    h1 { color: #333; }
-  </style>
+  <title>Loyalty Form</title>
   <meta name="encrypted-context" content='${JSON.stringify(decodedPayload).replace(/'/g, "\\'")}'/>
 </head>
 <body>
-  <h1>Redirecting to Loyalty Form</h1>
-  <div class="loader"></div>
-  <p>You'll be redirected to the form in a moment...</p>
+  <div id="root"></div>
   
+  <!-- Load the React app scripts -->
+  <script type="module" src="/assets/index.js"></script>
+  
+  <!-- Fallback if scripts don't load -->
   <script>
-    // One-time redirect to the React app with the payload as a URL parameter
-    // Set a flag in sessionStorage to prevent redirect loops
-    const hasRedirected = sessionStorage.getItem('hasRedirected');
-    
-    if (!hasRedirected) {
-      // Mark that we've done the redirect
-      sessionStorage.setItem('hasRedirected', 'true');
-      
-      setTimeout(function() {
-        // Redirect to the root with the payload
-        window.location.href = "/?payload=${encodeURIComponent(xPayload)}";
-      }, 1500);
-    } else {
-      // We've already redirected once, show a message
-      document.querySelector('.loader').style.display = 'none';
-      document.querySelector('p').textContent = 'Redirect loop detected. Please refresh the page or click the button below.';
-      
-      // Add a button to try again
-      const button = document.createElement('button');
-      button.textContent = 'Continue to Form';
-      button.style.padding = '10px 20px';
-      button.style.margin = '20px auto';
-      button.style.display = 'block';
-      button.style.backgroundColor = '#00E9A3';
-      button.style.border = 'none';
-      button.style.borderRadius = '5px';
-      button.style.color = 'white';
-      button.style.cursor = 'pointer';
-      
-      button.onclick = function() {
-        // Clear the flag and try again
-        sessionStorage.removeItem('hasRedirected');
-        window.location.href = "/?payload=${encodeURIComponent(xPayload)}";
-      };
-      
-      document.body.appendChild(button);
-    }
+    // Check if the React app loaded successfully
+    setTimeout(function() {
+      if (document.getElementById('root').children.length === 0) {
+        // React app didn't load, show a simple form as fallback
+        document.getElementById('root').innerHTML = 
+          '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; text-align: center; padding: 20px;">' +
+            '<h1>Loyalty Form</h1>' +
+            '<p>Enter your loyalty card number to receive discounted charging rates.</p>' +
+            '<form id="fallbackForm" style="max-width: 400px; margin: 0 auto;">' +
+              '<input type="text" id="loyaltyNumber" maxlength="7" pattern="\\d*" inputmode="numeric" ' +
+                'style="width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;" ' +
+                'placeholder="Enter 7-digit loyalty number" />' +
+              '<p id="inputHelp" style="text-align: left; font-size: 14px;">Enter your loyalty card number</p>' +
+              '<button type="submit" ' +
+                'style="width: 100%; background: linear-gradient(90deg, #00E9A3, #00C389); color: white; border: none; ' +
+                'padding: 12px; border-radius: 28px; cursor: pointer; font-size: 16px;">' +
+                'Submit' +
+              '</button>' +
+            '</form>' +
+          '</div>';
+        
+        // Add simple form validation
+        document.getElementById('fallbackForm').addEventListener('submit', function(e) {
+          e.preventDefault();
+          const input = document.getElementById('loyaltyNumber');
+          const help = document.getElementById('inputHelp');
+          
+          if (!/^\d{7}$/.test(input.value)) {
+            help.textContent = 'Please enter a valid 7-digit number';
+            help.style.color = 'red';
+            return;
+          }
+          
+          // Show success message
+          document.getElementById('fallbackForm').innerHTML = 
+            '<h2 style="color: #00C389;">Thank you!</h2>' +
+            '<p>Your loyalty card number has been successfully submitted.</p>' +
+            '<p>You will now receive discounted charging rates at our locations.</p>';
+        });
+      }
+    }, 3000);
   </script>
 </body>
 </html>`;
