@@ -403,4 +403,4 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export the handler for Vercel
-export default handler;
+module.exports = handler;
