@@ -13,7 +13,6 @@ console.log('Has JWT Secret:', !!JWT_SECRET);
 export default function handler(req, res) {
   // Log request details
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  console.log('Headers:', JSON.stringify(req.headers));
   
   // Set CORS headers to allow all origins
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -60,7 +59,7 @@ export default function handler(req, res) {
   
   <h2>Test with a Sample JWT Token</h2>
   <p>You can test this server by adding a payload parameter to the URL:</p>
-  <pre>https://loyalty-form.vercel.app/?payload=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InR5cGUiOiJ0ZXN0IiwicGFyYW1ldGVycyI6eyJldnNlSWQiOjEyMywicGh5c2ljYWxSZWZlcmVuY2UiOiJURVNUMTIzIn19fQ.oeWfxkKYi9SQqKNavZOEuXSxq4wYXoCdG2ncRvAwQrA</pre>
+  <pre>[https://loyalty-form.vercel.app/?payload=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InR5cGUiOiJ0ZXN0IiwicGFyYW1ldGVycyI6eyJldnNlSWQiOjEyMywicGh5c2ljYWxSZWZlcmVuY2UiOiJURVNUMTIzIn19fQ.oeWfxkKYi9SQqKNavZOEuXSxq4wYXoCdG2ncRvAwQrA</pre>](https://loyalty-form.vercel.app/?payload=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InR5cGUiOiJ0ZXN0IiwicGFyYW1ldGVycyI6eyJldnNlSWQiOjEyMywicGh5c2ljYWxSZWZlcmVuY2UiOiJURVNUMTIzIn19fQ.oeWfxkKYi9SQqKNavZOEuXSxq4wYXoCdG2ncRvAwQrA</pre>)
 </body>
 </html>`;
       
@@ -75,109 +74,47 @@ export default function handler(req, res) {
     console.log('Received payload:', xPayload.substring(0, 30) + '...');
     
     try {
-      // Decode the JWT token
+      // Decode the JWT token to verify it's valid
       const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
       const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
-      // Extract User ID and EVSE ID from the payload if available
-      const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
-      const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
-      const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
-      const firstName = decodedPayload.payload?.parameters?.firstName || '';
-      
-      // Serve a complete form directly without any redirects
+      // Create a simple loading page that redirects to the React app
       const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loyalty Form</title>
+  <title>Redirecting to Loyalty Form</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 800px; margin: 0 auto; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-    .form-card { padding: 20px; }
-    .logo-container { text-align: center; margin-bottom: 20px; }
-    .logo { max-width: 200px; height: auto; }
-    h1 { color: #333; margin-bottom: 20px; }
-    .greeting { color: #4CAF50; }
-    .context-info { margin-bottom: 20px; padding: 10px; background-color: #f0f0f0; border-radius: 4px; }
-    .input-group { margin-bottom: 20px; }
-    input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
-    .input-help { font-size: 14px; color: #666; margin-top: 5px; }
-    .error-text { color: #d32f2f; }
-    .submit-button { width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-    .submit-button:hover { background-color: #45a049; }
-    .submit-button:disabled { background-color: #cccccc; cursor: not-allowed; }
-    .success-message { display: none; text-align: center; padding: 20px; }
-    .success-message h3 { color: #4CAF50; margin-bottom: 10px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 20px; }
+    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #00E9A3; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    h1 { color: #333; }
   </style>
+  <meta name="encrypted-context" content='${JSON.stringify(decodedPayload).replace(/'/g, "\\'")}'/>
 </head>
 <body>
-  <div class="container">
-    <div class="form-card">
-      <div class="logo-container">
-        <img src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" alt="Company Logo" class="logo">
-      </div>
+  <h1>Redirecting to Loyalty Form</h1>
+  <div class="loader"></div>
+  <p>You'll be redirected to the form in a moment...</p>
+  
+  <script>
+    // Redirect to the React app with the payload as a URL parameter
+    setTimeout(function() {
+      // Only add the payload parameter if it's not already in the URL
+      const currentUrl = new URL(window.location.href);
+      const params = new URLSearchParams(currentUrl.search);
       
-      <h1>
-        ${firstName ? `<span class="greeting">Hi ${firstName}, </span>` : ''}
-        Enjoy lower KWh price while charging at our stores!
-      </h1>
-      
-      <div class="context-info">
-        <p><strong>Selected Charger:</strong> ${evseId}</p>
-        <p><strong>EVSE Reference:</strong> ${evseReference}</p>
-        <p><strong>User ID:</strong> ${userId}</p>
-      </div>
-      
-      <form id="loyaltyForm">
-        <div class="input-group">
-          <input type="text" id="loyaltyNumber" maxlength="7" pattern="\d*" inputmode="numeric" placeholder="">
-          <p class="input-help" id="inputHelp">Enter your loyalty card number</p>
-        </div>
-        
-        <button type="submit" class="submit-button" id="submitButton">Submit</button>
-      </form>
-      
-      <div id="successMessage" class="success-message">
-        <h3>Thank you!</h3>
-        <p>Your loyalty card number has been successfully submitted.</p>
-        <p>You will now receive discounted charging rates at our locations.</p>
-      </div>
-      
-      <script>
-        document.getElementById('loyaltyForm').addEventListener('submit', function(e) {
-          e.preventDefault();
-          const loyaltyNumber = document.getElementById('loyaltyNumber').value;
-          const inputHelp = document.getElementById('inputHelp');
-          const submitButton = document.getElementById('submitButton');
-          
-          if (loyaltyNumber.length === 0) {
-            inputHelp.textContent = 'Please enter your loyalty card number';
-            inputHelp.className = 'input-help error-text';
-            return;
-          }
-          
-          if (!/^\d+$/.test(loyaltyNumber)) {
-            inputHelp.textContent = 'Please enter numbers only';
-            inputHelp.className = 'input-help error-text';
-            return;
-          }
-          
-          if (loyaltyNumber.length < 7) {
-            inputHelp.textContent = 'Please enter a 7-digit card number';
-            inputHelp.className = 'input-help error-text';
-            return;
-          }
-          
-          // Show success message
-          document.getElementById('loyaltyForm').style.display = 'none';
-          document.getElementById('successMessage').style.display = 'block';
-        });
-      </script>
-    </div>
-  </div>
+      // If we already have the payload in the URL and we're at the root path, don't redirect again
+      if (params.has('payload') && currentUrl.pathname === '/') {
+        console.log('Already at the correct URL with payload');
+      } else {
+        // Redirect to the root with the payload
+        window.location.href = "/?payload=${encodeURIComponent(xPayload)}";
+      }
+    }, 1500);
+  </script>
 </body>
 </html>`;
       

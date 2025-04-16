@@ -3,6 +3,7 @@ import { decryptPayload } from '../utils/crypto'; // Keep for backward compatibi
 import { decodeJwtPayload } from '../utils/jwtCrypto'; // Only import what we use
 import { FormPayload } from '../types/payload';
 import Logger from '../utils/logger';
+import { fetchUserInfo } from '../utils/userApi';
 
 // Mock data for development environment
 const DEV_MOCK_DATA: FormPayload = {
@@ -13,6 +14,10 @@ const DEV_MOCK_DATA: FormPayload = {
   firstName: 'John'
 };
 
+// API configuration - these should be provided by the environment or configuration
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const API_TOKEN = process.env.REACT_APP_API_TOKEN || '';
+
 export const useEncryptedContext = () => {
   const [contextData, setContextData] = useState<FormPayload>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +25,7 @@ export const useEncryptedContext = () => {
   const [isFromMobileApp, setIsFromMobileApp] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const [evseReference, setEvseReference] = useState<string>('');
+  const [isUserInfoLoading, setIsUserInfoLoading] = useState(false);
 
   useEffect(() => {
     // Log on mount
@@ -175,11 +181,18 @@ export const useEncryptedContext = () => {
             Logger.info('Successfully decoded JWT context', {
               fields: Object.keys(extractedData),
               userName: extractedData.firstName || 'User',
-              evseId: extractedData.evseId
+              evseId: extractedData.evseId,
+              userId: extractedData.userId
             });
             
             setContextData(extractedData);
             setIsLoading(false);
+            
+            // If we have a userId but no firstName, fetch user info from API
+            if (extractedData.userId && !extractedData.firstName && API_BASE_URL && API_TOKEN) {
+              fetchUserInfoFromApi(extractedData.userId);
+            }
+            
             return; // Exit early if JWT decoding succeeds
           } catch (jwtError) {
             Logger.warn('JWT decoding failed, falling back to legacy decryption', {
@@ -226,9 +239,41 @@ export const useEncryptedContext = () => {
     readEncryptedContext();
   }, []);
 
+  // Function to fetch user info from API
+  const fetchUserInfoFromApi = async (userId: string) => {
+    if (!userId || !API_BASE_URL || !API_TOKEN) return;
+    
+    try {
+      setIsUserInfoLoading(true);
+      Logger.info('Fetching user info from API', { userId });
+      
+      const userData = await fetchUserInfo(userId, API_TOKEN, API_BASE_URL);
+      
+      if (userData && userData.firstName) {
+        // Update context data with the fetched first name
+        setContextData(prevData => ({
+          ...prevData,
+          firstName: userData.firstName
+        }));
+        
+        // Update user name
+        setUserName(userData.firstName);
+        
+        Logger.info('Updated user info from API', {
+          userId,
+          firstName: userData.firstName
+        });
+      }
+    } catch (err) {
+      Logger.error('Error fetching user info', err as Error);
+    } finally {
+      setIsUserInfoLoading(false);
+    }
+  };
+
   return { 
     contextData, 
-    isLoading, 
+    isLoading: isLoading || isUserInfoLoading, 
     error, 
     isFromMobileApp,
     userName,
