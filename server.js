@@ -1,8 +1,12 @@
-// Minimal server for Vercel
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
+// Minimal server for Vercel (ES Module version)
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+// Set up __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Initialize Express app
 const app = express();
@@ -12,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
 
 // Log startup information
-console.log('Server starting with CommonJS...');
+console.log('Server starting with ES modules...');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Has JWT Secret:', !!JWT_SECRET);
 
@@ -85,11 +89,9 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Export the app for serverless use
-module.exports = app;
+export default app;
