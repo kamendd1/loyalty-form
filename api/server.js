@@ -132,7 +132,9 @@ async function handler(req, res) {
           
           console.log('Attempting to fetch user info for userId:', userId);
           console.log('API Base URL:', apiBaseUrl);
-          console.log('Has API Token:', !!apiToken);
+          console.log('API Token:', apiToken);
+          console.log('Full URL:', `${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`);
+          console.log('Authorization Header:', `Bearer ${apiToken}`);
           
           const response = await fetch(`${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`, {
             method: 'GET',
@@ -143,8 +145,12 @@ async function handler(req, res) {
             }
           });
           
+          console.log('Response status:', response.status);
+          const responseText = await response.text();
+          console.log('Response body:', responseText);
+          
           if (response.ok) {
-            const userData = await response.json();
+            const userData = JSON.parse(responseText);
             firstName = userData.firstName || '';
             lastName = userData.lastName || '';
             console.log('Successfully fetched user info:', { firstName, lastName });
