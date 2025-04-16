@@ -158,6 +158,7 @@ export default function handler(req, res) {
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       
       // Create the redirect URL using the current hostname
+      // Make sure we're redirecting to the /app route which is configured in vercel.json
       const redirectUrl = `${protocol}://${currentHost}/app?payload=${encodeURIComponent(xPayload)}`;
       console.log('Redirecting to:', redirectUrl);
       
