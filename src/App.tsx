@@ -4,7 +4,9 @@ import SuccessPage from './pages/SuccessPage'
 import RedirectPage from './pages/RedirectPage'
 import LogoPage from './pages/LogoPage'
 import ErrorBoundary from './components/ErrorBoundary'
+import DebugPanel from './components/DebugPanel'
 import './App.css'
+import './styles/DebugPanel.css'
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
           <Route path="/redirect" element={<RedirectPage />} />
           <Route path="/logo" element={<LogoPage />} />
         </Routes>
+        <DebugPanel />
       </Router>
     </ErrorBoundary>
   )

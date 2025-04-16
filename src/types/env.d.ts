@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_ENCRYPTION_KEY: string;
+  readonly VITE_APP_SECRET: string;
+  readonly VITE_JWT_SECRET: string;
 }
 
 interface ImportMeta {

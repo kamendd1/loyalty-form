@@ -23,6 +23,28 @@ export const decryptPayload = (encryptedData: string): any => {
     hasKey: !!SECRET_KEY,
     keyLength: SECRET_KEY?.length
   });
+  
+  // Log detailed information about the encrypted data
+  try {
+    const dataFormat = {
+      isBase64Format: /^[A-Za-z0-9+/=]+$/.test(encryptedData),
+      containsSpecialChars: /[^A-Za-z0-9+/=]/.test(encryptedData),
+      charCounts: {} as Record<string, number>,
+      firstChars: encryptedData?.substring(0, 20) || '',
+      lastChars: encryptedData?.substring(encryptedData.length - 20) || ''
+    };
+    
+    // Count character frequencies for pattern analysis
+    if (encryptedData) {
+      for (const char of encryptedData.substring(0, 100)) { // Analyze first 100 chars
+        dataFormat.charCounts[char] = (dataFormat.charCounts[char] || 0) + 1;
+      }
+    }
+    
+    Logger.info('Encrypted data analysis', dataFormat);
+  } catch (analyzeError) {
+    Logger.error('Error analyzing encrypted data', analyzeError);
+  }
   // Log initial state
   Logger.info('Starting decryption attempt', {
     hasEncryptedData: !!encryptedData,
@@ -69,9 +91,29 @@ export const decryptPayload = (encryptedData: string): any => {
       input: encryptedData.substring(0, 20) + '...' // Show start of encrypted data
     });
     
-    const bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY);
-    console.log('Raw decryption output:', bytes.toString());
-    Logger.info('Decryption step completed');
+    // Try to detect if the data is already in a specific format
+    Logger.info('Attempting format detection', {
+      looksLikeBase64: /^[A-Za-z0-9+/=]+$/.test(encryptedData),
+      looksLikeJSON: encryptedData.trim().startsWith('{') && encryptedData.trim().endsWith('}'),
+      looksLikeJWT: /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/.test(encryptedData)
+    });
+    
+    // Add try/catch specifically around the decrypt operation
+    let bytes;
+    try {
+      bytes = CryptoJS.AES.decrypt(encryptedData, SECRET_KEY);
+      console.log('Raw decryption output:', bytes.toString());
+      Logger.info('Decryption step completed', {
+        bytesLength: bytes.toString().length,
+        bytesPreview: bytes.toString().substring(0, 30)
+      });
+    } catch (decryptError) {
+      Logger.error('CryptoJS.AES.decrypt operation failed', decryptError, {
+        errorName: decryptError instanceof Error ? decryptError.name : 'Unknown',
+        errorMessage: decryptError instanceof Error ? decryptError.message : String(decryptError)
+      });
+      throw decryptError;
+    }
 
     const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
     console.log('UTF8 conversion result:', {
