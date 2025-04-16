@@ -30,17 +30,40 @@ export const useEncryptedContext = () => {
     
     const readEncryptedContext = () => {
       try {
-        // Check if we're being loaded from the mobile app
-        console.log('Reading meta tag...');
+        // Check for X-Payload header (as per vendor instructions)
+        console.log('Looking for X-Payload header...');
+        
+        // Since we can't directly access headers in client-side code,
+        // check if the vendor has added it as a meta tag
+        const xPayloadMeta = document.querySelector('meta[name="X-Payload"]') || 
+                            document.querySelector('meta[name="x-payload"]');
+        
+        // Also check the encrypted-context meta tag for backward compatibility
         const metaTag = document.querySelector('meta[name="encrypted-context"]');
+        
+        // Try to get the payload from either source
+        let encryptedData = null;
+        
+        if (xPayloadMeta) {
+          encryptedData = xPayloadMeta.getAttribute('content');
+          console.log('Found X-Payload meta tag:', !!encryptedData);
+          Logger.info('Found X-Payload meta tag', {
+            hasContent: !!encryptedData,
+            contentLength: encryptedData?.length
+          });
+        } else if (metaTag) {
+          encryptedData = metaTag.getAttribute('content');
+          console.log('Using encrypted-context meta tag as fallback');
+        }
+        
+        // Log meta tag information
         console.log('Meta tag found:', !!metaTag);
         Logger.info('Meta tag check', {
           found: !!metaTag,
           attributes: metaTag ? Array.from(metaTag.attributes).map(attr => `${attr.name}=${attr.value}`).join(', ') : 'none'
         });
         
-        const encryptedData = metaTag?.getAttribute('content');
-        console.log('Meta tag content:', {
+        console.log('Payload content:', {
           hasContent: !!encryptedData,
           length: encryptedData?.length,
           preview: encryptedData ? encryptedData.substring(0, 20) + '...' : 'none'
