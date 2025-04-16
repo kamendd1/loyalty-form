@@ -79,66 +79,66 @@ export default function handler(req, res) {
       const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
-      // Directly serve the React app with the payload embedded
-      // This avoids redirect issues with Vercel routing
+      // Create a simple HTML page that stores the payload in localStorage and redirects to the app
       const html = `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loyalty Form</title>
+  <title>Redirecting to Loyalty Form</title>
   <meta name="encrypted-context" content='${JSON.stringify(decodedPayload).replace(/'/g, "\\'")}'/>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+      text-align: center;
+    }
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #00E9A3;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .container {
+      max-width: 500px;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 16px;
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  
-  <!-- Load the React app scripts with correct hashed filenames -->
-  <link rel="stylesheet" href="/assets/index-BN_SKaEV.css">
-  <script type="module" src="/assets/index-CwYl2miS.js"></script>
-  
-  <!-- Fallback if scripts don't load -->
+  <div class="container">
+    <h1>Redirecting to Loyalty Form</h1>
+    <div class="loader"></div>
+    <p>You'll be redirected to the form in a moment...</p>
+  </div>
   <script>
-    // Check if the React app loaded successfully
+    // Store the payload in sessionStorage to make it available to the React app
+    sessionStorage.setItem('jwt_payload', '${xPayload}');
+    
+    // Redirect to the React app after a short delay
     setTimeout(function() {
-      if (document.getElementById('root').children.length === 0) {
-        // React app didn't load, show a simple form as fallback
-        document.getElementById('root').innerHTML = 
-          '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; text-align: center; padding: 20px;">' +
-            '<h1>Loyalty Form</h1>' +
-            '<p>Enter your loyalty card number to receive discounted charging rates.</p>' +
-            '<form id="fallbackForm" style="max-width: 400px; margin: 0 auto;">' +
-              '<input type="text" id="loyaltyNumber" maxlength="7" pattern="\\d*" inputmode="numeric" ' +
-                'style="width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;" ' +
-                'placeholder="Enter 7-digit loyalty number" />' +
-              '<p id="inputHelp" style="text-align: left; font-size: 14px;">Enter your loyalty card number</p>' +
-              '<button type="submit" ' +
-                'style="width: 100%; background: linear-gradient(90deg, #00E9A3, #00C389); color: white; border: none; ' +
-                'padding: 12px; border-radius: 28px; cursor: pointer; font-size: 16px;">' +
-                'Submit' +
-              '</button>' +
-            '</form>' +
-          '</div>';
-        
-        // Add simple form validation
-        document.getElementById('fallbackForm').addEventListener('submit', function(e) {
-          e.preventDefault();
-          const input = document.getElementById('loyaltyNumber');
-          const help = document.getElementById('inputHelp');
-          
-          if (!/^\d{7}$/.test(input.value)) {
-            help.textContent = 'Please enter a valid 7-digit number';
-            help.style.color = 'red';
-            return;
-          }
-          
-          // Show success message
-          document.getElementById('fallbackForm').innerHTML = 
-            '<h2 style="color: #00C389;">Thank you!</h2>' +
-            '<p>Your loyalty card number has been successfully submitted.</p>' +
-            '<p>You will now receive discounted charging rates at our locations.</p>';
-        });
-      }
-    }, 3000);
+      window.location.href = '/app';
+    }, 1500);
   </script>
 </body>
 </html>`;
