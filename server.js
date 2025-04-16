@@ -1,5 +1,7 @@
 // Serverless function for Vercel
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
 
 // Get JWT secret from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
@@ -150,52 +152,68 @@ export default function handler(req, res) {
       const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
-      // Create a simple HTML page with the payload as a meta tag
+      // Instead of redirecting, we'll embed the payload in a meta tag and serve the app directly
       const payloadString = JSON.stringify(decodedPayload).replace(/'/g, "\\'");
       
-      // Get the current hostname to avoid hardcoding the redirect URL
-      const currentHost = req.headers.host || 'loyalty-form.vercel.app';
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      
-      // Create the redirect URL using the current hostname
-      // Make sure we're redirecting to the /app route which is configured in vercel.json
-      const redirectUrl = `${protocol}://${currentHost}/app?payload=${encodeURIComponent(xPayload)}`;
-      console.log('Redirecting to:', redirectUrl);
-      
       // Extract User ID and EVSE ID from the payload if available
-const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
-const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
-const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
-
-const html = `<!DOCTYPE html>
-<html>
+      const userId = decodedPayload.payload?.parameters?.userId || 'Not available';
+      const evseId = decodedPayload.payload?.parameters?.evseId || 'Not available';
+      const evseReference = decodedPayload.payload?.parameters?.evsePhysicalReference || 'Not available';
+      
+      // Create a complete HTML page with the application embedded
+      const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Loyalty Form</title>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loyalty Form</title>
+  
+  <!-- Embed the payload as a meta tag for the application to read -->
   <meta name="encrypted-context" content='${payloadString}' />
+  
+  <!-- Add some basic styling for the loading screen -->
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-    .info { background: #f5f5f5; padding: 20px; border-radius: 5px; display: inline-block; margin: 20px; text-align: left; }
-    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 20px auto; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    #app-loading { text-align: center; padding: 2rem; }
+    .user-info { background: #f5f5f5; padding: 1rem; border-radius: 5px; margin: 1rem 0; display: inline-block; text-align: left; }
+    .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 1rem auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #root { padding: 1rem; }
   </style>
-  <script>
-    // Redirect to the main app with the payload as a URL parameter after a short delay
-    setTimeout(function() {
-      window.location.href = "${redirectUrl}";
-    }, 2000); // 2 second delay to show the information
-  </script>
 </head>
 <body>
-  <h1>Loyalty Form</h1>
-  <div class="loader"></div>
-  <p>Loading application...</p>
-  <div class="info">
-    <p><strong>User ID:</strong> ${userId}</p>
-    <p><strong>EVSE ID:</strong> ${evseId}</p>
-    <p><strong>EVSE Reference:</strong> ${evseReference}</p>
+  <!-- Loading screen that will be replaced by the React app -->
+  <div id="app-loading">
+    <h1>Loyalty Form</h1>
+    <div class="loader"></div>
+    <p>Loading application...</p>
+    <div class="user-info">
+      <p><strong>User ID:</strong> ${userId}</p>
+      <p><strong>EVSE ID:</strong> ${evseId}</p>
+      <p><strong>EVSE Reference:</strong> ${evseReference}</p>
+    </div>
   </div>
+  
+  <!-- Root element for React to mount -->
+  <div id="root"></div>
+  
+  <!-- Include the application scripts -->
+  <script>
+    // This will hide the loading screen once the app is loaded
+    window.addEventListener('load', function() {
+      const appLoading = document.getElementById('app-loading');
+      if (appLoading) {
+        setTimeout(function() {
+          appLoading.style.display = 'none';
+        }, 1000);
+      }
+    });
+  </script>
+  
+  <!-- Include your application's JavaScript and CSS -->
+  <script type="module" crossorigin src="/assets/index-CwYl2miS.js"></script>
+  <link rel="stylesheet" href="/assets/index-BN_SKaEV.css">
 </body>
 </html>`;
       
