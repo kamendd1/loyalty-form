@@ -1,5 +1,10 @@
-// Serverless function for Vercel
+// Server implementation for both Vercel and local development
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import express from 'express';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Get JWT secret from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
@@ -9,8 +14,8 @@ console.log('Starting serverless function...');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Has JWT Secret:', !!JWT_SECRET);
 
-// Create a request handler function for serverless environments
-export default function handler(req, res) {
+// Create a request handler function that works for both Express and serverless
+function handler(req, res) {
   // Log request details
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   
@@ -75,8 +80,25 @@ export default function handler(req, res) {
     
     try {
       // Decode the JWT token to verify it's valid
-      const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
-      const decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
+      let decodedPayload;
+      try {
+        // First try to verify with the base64-decoded secret
+        const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
+        decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
+      } catch (verifyError) {
+        // If that fails, try with the raw secret
+        try {
+          decodedPayload = jwt.verify(xPayload, JWT_SECRET || 'development-secret', { algorithms: ['HS256'] });
+        } catch (rawError) {
+          // If in development, try to decode without verification
+          if (process.env.NODE_ENV !== 'production') {
+            decodedPayload = jwt.decode(xPayload);
+            console.log('Development mode: Decoded JWT without verification');
+          } else {
+            throw rawError;
+          }
+        }
+      }
       console.log('Successfully decoded payload:', JSON.stringify(decodedPayload));
       
       // Extract user information from the payload
@@ -361,3 +383,21 @@ export default function handler(req, res) {
     res.end('Method Not Allowed');
   }
 }
+
+// Set up Express server for local development
+if (process.env.NODE_ENV !== 'production') {
+  const app = express();
+  const PORT = process.env.PORT || 3000;
+  
+  // Use the handler function for specific routes
+  app.get('/', handler);
+  app.get('/index.html', handler);
+  
+  // Start the server
+  app.listen(PORT, () => {
+    console.log(`Local server running at http://localhost:${PORT}`);
+  });
+}
+
+// Export the handler for Vercel
+export default handler;
