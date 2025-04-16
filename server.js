@@ -1,17 +1,16 @@
-// Ultra-minimal server for Vercel
-import http from 'http';
+// Serverless function for Vercel
 import jwt from 'jsonwebtoken';
 
 // Get JWT secret from environment variables
 const JWT_SECRET = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
 
 // Log startup information
-console.log('Starting ultra-minimal server...');
+console.log('Starting serverless function...');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Has JWT Secret:', !!JWT_SECRET);
 
-// Create a simple HTTP server
-const server = http.createServer((req, res) => {
+// Create a request handler function for serverless environments
+export default function handler(req, res) {
   // Log request details
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   console.log('Headers:', JSON.stringify(req.headers));
@@ -28,10 +27,10 @@ const server = http.createServer((req, res) => {
     return;
   }
   
-  // Only handle GET requests to the root path
-  if (req.method === 'GET' && req.url === '/') {
-    // Get the X-Payload header
-    const xPayload = req.headers['x-payload'];
+  // Only handle GET requests
+  if (req.method === 'GET') {
+    // Get the X-Payload header (case insensitive)
+    const xPayload = req.headers['x-payload'] || req.headers['X-Payload'];
     
     if (xPayload) {
       console.log('Received X-Payload header:', xPayload.substring(0, 30) + '...');
@@ -53,7 +52,7 @@ const server = http.createServer((req, res) => {
   <meta name="encrypted-context" content='${payloadString}' />
   <script>
     // Redirect to the main app with the payload as a URL parameter
-    window.location.href = "https://loyalty-form-app.vercel.app/?payload=${encodeURIComponent(xPayload)}";
+    window.location.href = "https://loyalty-form.vercel.app/?payload=${encodeURIComponent(xPayload)}";
   </script>
 </head>
 <body>
@@ -76,17 +75,8 @@ const server = http.createServer((req, res) => {
       res.end('Missing X-Payload header');
     }
   } else {
-    // For all other requests, return 404
-    res.statusCode = 404;
-    res.end('Not found');
+    // For all other request methods, return 405 Method Not Allowed
+    res.statusCode = 405;
+    res.end('Method Not Allowed');
   }
-});
-
-// Start the server
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
-// Export the server for serverless use
-export default server;
+}
