@@ -372,7 +372,7 @@ async function handler(req, res) {
       </div>
     </div>
   </div>
-  <script src="/loyalty-form.js"></script>
+  <script src="https://kamendd1.github.io/loyalty-form/loyalty-form.js"></script>
 </body>
 </html>`;
       
