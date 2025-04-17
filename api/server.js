@@ -409,18 +409,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Export the handler for Vercel
 // Early exit for static assets so Vercel can serve them from /public
-function isStaticAsset(url) {
-  return /\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|map)$/.test(url);
-}
-
-module.exports = function(req, res) {
-  if (isStaticAsset(req.url)) {
-    res.statusCode = 404;
-    res.end();
-    return;
-  }
-  return handler(req, res);
-};
+module.exports = handler;
 
 // Export the original handler for local dev/testing
 handler._original = handler;
