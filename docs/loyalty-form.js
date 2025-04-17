@@ -53,7 +53,7 @@
           successMessage.style.display = 'block';
           setTimeout(function() {
             window.location.replace('/close');
-          }, 10000); // 10 seconds
+          }, 5000); // 5 seconds
           return;
         } else {
           const err = await resp.json();
