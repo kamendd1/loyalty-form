@@ -46,13 +46,13 @@
     }
     submitButton.disabled = true;
     submitButton.textContent = 'Submitting...';
+    const userId = document.getElementById('userId').value;
     fetch(window.location.pathname, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-Payload': (new URLSearchParams(window.location.search)).get('payload') || ''
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ loyaltyNumber: value })
+      body: JSON.stringify({ userId })
     })
     .then(async resp => {
       if (resp.ok) {

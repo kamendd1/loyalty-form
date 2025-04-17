@@ -347,6 +347,7 @@ async function handler(req, res) {
       ` : ''}
       
       <form id="loyaltyForm">
+  <input type="hidden" id="userId" value="${userId}">
         <div class="input-group">
           <input type="text" id="loyaltyNumber" maxlength="7" pattern="\\d*" inputmode="numeric" placeholder="">
           <p class="input-help" id="inputHelp">Enter your loyalty card number</p>
