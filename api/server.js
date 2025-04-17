@@ -338,6 +338,7 @@ async function handler(req, res) {
 <body>
   <div class="container">
     <div class="form-card">
+      <div id="debugMessage" style="color: #d32f2f; font-size: 0.95rem; margin-bottom: 10px;"></div>
       <div class="logo-container">
         <img src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" alt="Company Logo" class="logo" id="companyLogo">
       </div>
@@ -373,6 +374,12 @@ async function handler(req, res) {
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      var debugDiv = document.getElementById('debugMessage');
+      function showDebug(msg) {
+        if (debugDiv) debugDiv.textContent = msg;
+      }
+      showDebug('Loyalty form script loaded');
+      console.log('Loyalty form script loaded');
       // Store payload data for use in JavaScript
       const userData = {
         userId: "${userId}",
@@ -390,8 +397,14 @@ async function handler(req, res) {
       const inputHelp = document.getElementById('inputHelp');
       const submitButton = document.getElementById('submitButton');
       const successMessage = document.getElementById('successMessage');
+      console.log('Form:', form, 'Input:', input, 'SubmitButton:', submitButton, 'SuccessMessage:', successMessage);
+      if (!form) { showDebug('Form element not found!'); console.error('Form element not found!'); return; }
+      if (!input) { showDebug('Input element not found!'); console.error('Input element not found!'); return; }
+      if (!submitButton) { showDebug('Submit button not found!'); console.error('Submit button not found!'); return; }
       
       form.addEventListener('submit', function(e) {
+        showDebug('Form submit event triggered');
+        console.log('Form submit event triggered');
         e.preventDefault(); // Prevent page reload
         e.preventDefault();
         const value = input.value;
@@ -433,11 +446,13 @@ async function handler(req, res) {
         })
         .then(async resp => {
           if (resp.ok) {
+            showDebug('Submission successful!');
             // Hide form and show success message
             form.style.display = 'none';
             successMessage.style.display = 'block';
           } else {
             const err = await resp.json();
+            showDebug('Server error: ' + (err.error || 'Unknown'));
             inputHelp.textContent = err.error || 'Server error';
             inputHelp.className = 'input-help error-text';
             input.className = 'error';
@@ -447,6 +462,7 @@ async function handler(req, res) {
           }
         })
         .catch((err) => {
+          showDebug('Network/server error: ' + err);
           inputHelp.textContent = 'Network/server error';
           inputHelp.className = 'input-help error-text';
           input.className = 'error';
