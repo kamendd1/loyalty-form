@@ -329,7 +329,7 @@ async function handler(req, res) {
 <body>
   <div class="container">
     <div class="form-card">
-      <div id="debugMessage" style="color: #d32f2f; font-size: 0.95rem; margin-bottom: 10px;">JavaScript did not run! Please contact support.</div>
+
       <div class="logo-container">
         <img src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" alt="Company Logo" class="logo" id="companyLogo">
       </div>
@@ -347,7 +347,7 @@ async function handler(req, res) {
       </div>
       ` : ''}
       
-      <p style="color: red; font-size: 1rem;">DEBUG userId: ${userId}</p>
+
       <form id="loyaltyForm">
 
         <div class="input-group">
