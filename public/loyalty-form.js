@@ -46,7 +46,7 @@
     }
     submitButton.disabled = true;
     submitButton.textContent = 'Submitting...';
-    const userId = document.getElementById('userId').value;
+    const userId = document.querySelector('.context-info')?.dataset.userid;
     fetch(window.location.pathname, {
       method: 'POST',
       headers: {

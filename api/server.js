@@ -339,7 +339,7 @@ async function handler(req, res) {
       </h1>
       
       ${evseId || evseReference ? `
-      <div class="context-info">
+      <div class="context-info" data-userid="${userId}">
         ${evseId ? '<p>Selected Charger: ' + evseId + '</p>' : ''}
         ${evseReference ? '<p>EVSE Reference: ' + evseReference + '</p>' : ''}
         ${userId ? '<p>User ID: ' + userId + '</p>' : ''}
@@ -348,7 +348,7 @@ async function handler(req, res) {
       
       <p style="color: red; font-size: 1rem;">DEBUG userId: ${userId}</p>
       <form id="loyaltyForm">
-  <input type="hidden" id="userId" value="${userId}">
+
         <div class="input-group">
           <input type="text" id="loyaltyNumber" maxlength="7" pattern="\\d*" inputmode="numeric" placeholder="">
           <p class="input-help" id="inputHelp">Enter your loyalty card number</p>
