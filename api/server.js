@@ -392,6 +392,7 @@ async function handler(req, res) {
       const successMessage = document.getElementById('successMessage');
       
       form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent page reload
         e.preventDefault();
         const value = input.value;
         
@@ -442,14 +443,16 @@ async function handler(req, res) {
             input.className = 'error';
             submitButton.disabled = false;
             submitButton.textContent = 'Submit';
+            console.error('Server error:', err);
           }
         })
-        .catch(() => {
+        .catch((err) => {
           inputHelp.textContent = 'Network/server error';
           inputHelp.className = 'input-help error-text';
           input.className = 'error';
           submitButton.disabled = false;
           submitButton.textContent = 'Submit';
+          console.error('Fetch error:', err);
         });
       });
       
