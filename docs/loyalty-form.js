@@ -12,9 +12,9 @@
   const inputHelp = document.getElementById('inputHelp');
   const submitButton = document.getElementById('submitButton');
   const successMessage = document.getElementById('successMessage');
-  if (!form) { showDebug('Form element not found!'); return; }
-  if (!input) { showDebug('Input element not found!'); return; }
-  if (!submitButton) { showDebug('Submit button not found!'); return; }
+  if (!form) { return; }
+  if (!input) { return; }
+  if (!submitButton) { return; }
   form.addEventListener('submit', function(e) {
     try {
       e.preventDefault();
