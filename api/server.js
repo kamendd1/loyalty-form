@@ -346,6 +346,7 @@ async function handler(req, res) {
       </div>
       ` : ''}
       
+      <p style="color: red; font-size: 1rem;">DEBUG userId: ${userId}</p>
       <form id="loyaltyForm">
   <input type="hidden" id="userId" value="${userId}">
         <div class="input-group">
