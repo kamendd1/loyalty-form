@@ -7,10 +7,7 @@
     }
   ],
 
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "api/server.js" }
-  ],
+
   "env": {
     "JWT_SECRET": "2OX3B8tIoL1swIqN5yacTCV74037VhTgmtIsHtn3zGg=",
     "API_BASE_URL": "https://techarch.stable.qa.charge.ampeco.tech",
