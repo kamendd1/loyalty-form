@@ -31,6 +31,74 @@ async function handler(req, res) {
     return;
   }
   
+    // Handle POST requests for loyalty card submission
+  if (req.method === 'POST') {
+    try {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        const data = JSON.parse(body);
+        const loyaltyNumber = data.loyaltyNumber;
+        // Get JWT from header or query
+        const xPayload = req.headers['x-payload'] || req.headers['X-Payload'] || (req.query && req.query.payload);
+        if (!xPayload) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'Missing payload' }));
+          return;
+        }
+        let decodedPayload;
+        try {
+          const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
+          decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
+        } catch (verifyError) {
+          try {
+            decodedPayload = jwt.verify(xPayload, JWT_SECRET || 'development-secret', { algorithms: ['HS256'] });
+          } catch (rawError) {
+            res.statusCode = 401;
+            res.end(JSON.stringify({ error: 'Invalid JWT' }));
+            return;
+          }
+        }
+        const userId = decodedPayload.payload?.parameters?.userId || decodedPayload.userId;
+        if (!userId) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'Missing userId in JWT' }));
+          return;
+        }
+        // PATCH user group assignment
+        const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
+        const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
+        const patchUrl = `${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`;
+        try {
+          const patchResp = await fetch(patchUrl, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${apiToken}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ userGroupIds: [46] })
+          });
+          const patchBody = await patchResp.text();
+          if (patchResp.ok) {
+            res.statusCode = 200;
+            res.end(JSON.stringify({ success: true, data: JSON.parse(patchBody) }));
+          } else {
+            res.statusCode = patchResp.status;
+            res.end(JSON.stringify({ error: patchBody }));
+          }
+        } catch (err) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+    } catch (err) {
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
   // Only handle GET requests
   if (req.method === 'GET') {
     // Get the X-Payload header (case insensitive) or from URL query
@@ -353,12 +421,36 @@ async function handler(req, res) {
         submitButton.disabled = true;
         submitButton.textContent = 'Submitting...';
         
-        // Simulate API call
-        setTimeout(function() {
-          // Hide form and show success message
-          form.style.display = 'none';
-          successMessage.style.display = 'block';
-        }, 1000);
+        // Submit loyalty number to server
+        fetch(window.location.pathname, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Payload': (new URLSearchParams(window.location.search)).get('payload') || ''
+          },
+          body: JSON.stringify({ loyaltyNumber: value })
+        })
+        .then(async resp => {
+          if (resp.ok) {
+            // Hide form and show success message
+            form.style.display = 'none';
+            successMessage.style.display = 'block';
+          } else {
+            const err = await resp.json();
+            inputHelp.textContent = err.error || 'Server error';
+            inputHelp.className = 'input-help error-text';
+            input.className = 'error';
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit';
+          }
+        })
+        .catch(() => {
+          inputHelp.textContent = 'Network/server error';
+          inputHelp.className = 'input-help error-text';
+          input.className = 'error';
+          submitButton.disabled = false;
+          submitButton.textContent = 'Submit';
+        });
       });
       
       // Logo replacement functionality
