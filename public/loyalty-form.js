@@ -23,32 +23,37 @@
   if (!input) { showDebug('Input element not found!'); return; }
   if (!submitButton) { showDebug('Submit button not found!'); return; }
   form.addEventListener('submit', function(e) {
-    showDebug('Form submit event triggered (handler start)');
-    e.preventDefault();
-    const value = input.value;
-    if (value.length === 0) {
-      inputHelp.textContent = 'Please enter your loyalty card number';
-      inputHelp.className = 'input-help error-text';
-      input.className = 'error';
-      return;
-    }
-    if (!/^\d+$/.test(value)) {
-      inputHelp.textContent = 'Please enter numbers only';
-      inputHelp.className = 'input-help error-text';
-      input.className = 'error';
-      return;
-    }
-    if (value.length < 7) {
-      inputHelp.textContent = 'Please enter a 7-digit card number';
-      inputHelp.className = 'input-help error-text';
-      input.className = 'error';
-      return;
-    }
-    submitButton.disabled = true;
-    submitButton.textContent = 'Submitting...';
-    const userId = document.querySelector('.context-info')?.dataset.userid;
-    showDebug('userId being sent: ' + userId);
-    fetch(window.location.pathname, {
+    try {
+      showDebug('Form submit event triggered (handler start)');
+      e.preventDefault();
+      const value = input.value;
+      if (value.length === 0) {
+        showDebug('Validation failed: Loyalty card number is empty');
+        inputHelp.textContent = 'Please enter your loyalty card number';
+        inputHelp.className = 'input-help error-text';
+        input.className = 'error';
+        return;
+      }
+      if (!/^\d+$/.test(value)) {
+        showDebug('Validation failed: Non-numeric characters entered');
+        inputHelp.textContent = 'Please enter numbers only';
+        inputHelp.className = 'input-help error-text';
+        input.className = 'error';
+        return;
+      }
+      if (value.length < 7) {
+        showDebug('Validation failed: Loyalty card number is less than 7 digits');
+        inputHelp.textContent = 'Please enter a 7-digit card number';
+        inputHelp.className = 'input-help error-text';
+        input.className = 'error';
+        return;
+      }
+      submitButton.disabled = true;
+      submitButton.textContent = 'Submitting...';
+      const userId = document.querySelector('.context-info')?.dataset.userid;
+      showDebug('userId being sent: ' + userId);
+      showDebug('POST body: ' + JSON.stringify({userId}));
+      fetch(window.location.pathname, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -79,5 +84,8 @@
       submitButton.textContent = 'Submit';
     });
     return false;
+    } catch (err) {
+      showDebug('JS error: ' + (err && err.message ? err.message : err));
+    }
   });
 })();
