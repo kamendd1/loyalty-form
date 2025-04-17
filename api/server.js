@@ -372,10 +372,7 @@ async function handler(req, res) {
       </div>
     </div>
   </div>
-  <!-- Move script to just before </body> for best reliability -->
-  <script>
-    // Run immediately, do not wait for DOMContentLoaded
-    (function() {
+  <script src="/loyalty-form.js"></script>
       var debugDiv = document.getElementById('debugMessage');
       function showDebug(msg) {
         if (debugDiv) debugDiv.textContent = msg;
