@@ -49,7 +49,11 @@
       })
       .then(async resp => {
         if (resp.ok) {
-          window.location.replace('/close');
+          form.style.display = 'none';
+          successMessage.style.display = 'block';
+          setTimeout(function() {
+            window.location.replace('/close');
+          }, 10000); // 10 seconds
           return;
         } else {
           const err = await resp.json();
