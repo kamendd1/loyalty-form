@@ -392,6 +392,13 @@ async function handler(req, res) {
   }
 }
 
+// Early exit for static assets so Vercel can serve them from /public
+if (req && req.url && /\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|map)$/.test(req.url)) {
+  res.statusCode = 404;
+  res.end();
+  return;
+}
+
 // Set up Express server for local development
 if (process.env.NODE_ENV !== 'production') {
   const app = express();
