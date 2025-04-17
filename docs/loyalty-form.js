@@ -49,8 +49,8 @@
       })
       .then(async resp => {
         if (resp.ok) {
-          form.style.display = 'none';
-          successMessage.style.display = 'block';
+          window.location.replace('/close');
+          return;
         } else {
           const err = await resp.json();
           inputHelp.textContent = err.error || 'Server error';
