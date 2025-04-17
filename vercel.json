@@ -6,10 +6,7 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    { "src": "/(.*\\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|map))", "dest": "/public/$1" },
-    { "src": "/(.*)", "dest": "api/server.js" }
-  ],
+
   "env": {
     "JWT_SECRET": "2OX3B8tIoL1swIqN5yacTCV74037VhTgmtIsHtn3zGg=",
     "API_BASE_URL": "https://techarch.stable.qa.charge.ampeco.tech",
