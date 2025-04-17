@@ -39,32 +39,22 @@ async function handler(req, res) {
       req.on('end', async () => {
         const data = JSON.parse(body);
         const loyaltyNumber = data.loyaltyNumber;
-        // Get JWT from header or query
-        const xPayload = req.headers['x-payload'] || req.headers['X-Payload'] || (req.query && req.query.payload);
-        if (!xPayload) {
+        
+        // Proceed with the PATCH request as long as the loyalty number is present
+        if (!loyaltyNumber) {
           res.statusCode = 400;
-          res.end(JSON.stringify({ error: 'Missing payload' }));
+          res.end(JSON.stringify({ error: 'Missing loyalty number' }));
           return;
         }
-        let decodedPayload;
-        try {
-          const secretBuffer = JWT_SECRET ? Buffer.from(JWT_SECRET, 'base64') : 'development-secret';
-          decodedPayload = jwt.verify(xPayload, secretBuffer, { algorithms: ['HS256'] });
-        } catch (verifyError) {
-          try {
-            decodedPayload = jwt.verify(xPayload, JWT_SECRET || 'development-secret', { algorithms: ['HS256'] });
-          } catch (rawError) {
-            res.statusCode = 401;
-            res.end(JSON.stringify({ error: 'Invalid JWT' }));
-            return;
-          }
-        }
-        const userId = decodedPayload.payload?.parameters?.userId || decodedPayload.userId;
+
+        // If you need userId, you can accept it in the POST body (e.g. data.userId) or hardcode/test with a value
+        const userId = data.userId; // <-- update this as needed
         if (!userId) {
           res.statusCode = 400;
-          res.end(JSON.stringify({ error: 'Missing userId in JWT' }));
+          res.end(JSON.stringify({ error: 'Missing userId in request' }));
           return;
         }
+
         // PATCH user group assignment
         const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
         const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
