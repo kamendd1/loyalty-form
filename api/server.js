@@ -34,54 +34,56 @@ async function handler(req, res) {
     // Handle POST requests for loyalty card submission
   if (req.method === 'POST') {
     try {
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', async () => {
-        const data = JSON.parse(body);
-        const loyaltyNumber = data.loyaltyNumber;
-        
-        // Proceed with the PATCH request as long as the loyalty number is present
-        if (!loyaltyNumber) {
-          res.statusCode = 400;
-          res.end(JSON.stringify({ error: 'Missing loyalty number' }));
-          return;
-        }
+      let data = {};
+      if (req.body) {
+        data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      } else {
+        let body = '';
+        await new Promise((resolve, reject) => {
+          req.on('data', chunk => { body += chunk; });
+          req.on('end', resolve);
+          req.on('error', reject);
+        });
+        data = JSON.parse(body || '{}');
+      }
+      // Debug: log parsed POST data
+      console.log('Parsed POST data:', data);
+      const loyaltyNumber = data.loyaltyNumber;
+      const userId = data.userId;
+      
+      // Proceed with the PATCH request as long as the loyalty number and userId are present
+      if (!loyaltyNumber || !userId) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Missing loyalty number or userId in request' }));
+        return;
+      }
 
-        // If you need userId, you can accept it in the POST body (e.g. data.userId) or hardcode/test with a value
-        const userId = data.userId; // <-- update this as needed
-        if (!userId) {
-          res.statusCode = 400;
-          res.end(JSON.stringify({ error: 'Missing userId in request' }));
-          return;
+      // PATCH user group assignment
+      const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
+      const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
+      const patchUrl = `${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`;
+      try {
+        const patchResp = await fetch(patchUrl, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ userGroupIds: [46] })
+        });
+        const patchBody = await patchResp.text();
+        if (patchResp.ok) {
+          res.statusCode = 200;
+          res.end(JSON.stringify({ success: true, data: JSON.parse(patchBody) }));
+        } else {
+          res.statusCode = patchResp.status;
+          res.end(JSON.stringify({ error: patchBody }));
         }
-
-        // PATCH user group assignment
-        const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
-        const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
-        const patchUrl = `${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`;
-        try {
-          const patchResp = await fetch(patchUrl, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${apiToken}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ userGroupIds: [46] })
-          });
-          const patchBody = await patchResp.text();
-          if (patchResp.ok) {
-            res.statusCode = 200;
-            res.end(JSON.stringify({ success: true, data: JSON.parse(patchBody) }));
-          } else {
-            res.statusCode = patchResp.status;
-            res.end(JSON.stringify({ error: patchBody }));
-          }
-        } catch (err) {
-          res.statusCode = 500;
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
+      } catch (err) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: err.message }));
+      }
     } catch (err) {
       res.statusCode = 500;
       res.end(JSON.stringify({ error: err.message }));
