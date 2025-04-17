@@ -48,17 +48,16 @@ async function handler(req, res) {
       }
       // Debug: log parsed POST data
       console.log('Parsed POST data:', data);
-      const loyaltyNumber = data.loyaltyNumber;
       const userId = data.userId;
       
-      // Proceed with the PATCH request as long as the loyalty number and userId are present
-      if (!loyaltyNumber || !userId) {
+      // Proceed with the PATCH request as long as the userId is present
+      if (!userId) {
         res.statusCode = 400;
-        res.end(JSON.stringify({ error: 'Missing loyalty number or userId in request' }));
+        res.end(JSON.stringify({ error: 'Missing userId in request' }));
         return;
       }
 
-      // PATCH user group assignment
+      // PATCH user group assignment (no loyaltyNumber needed)
       const apiBaseUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL;
       const apiToken = process.env.API_TOKEN || process.env.VITE_API_TOKEN;
       const patchUrl = `${apiBaseUrl}/public-api/resources/users/v1.0/${userId}`;
