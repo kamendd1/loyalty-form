@@ -356,7 +356,7 @@ async function handler(req, res) {
       </div>
       ` : ''}
       
-      <form id="loyaltyForm">
+      <form id="loyaltyForm" onsubmit="return false;">
         <div class="input-group">
           <input type="text" id="loyaltyNumber" maxlength="7" pattern="\\d*" inputmode="numeric" placeholder="">
           <p class="input-help" id="inputHelp">Enter your loyalty card number</p>
@@ -372,6 +372,7 @@ async function handler(req, res) {
       </div>
     </div>
   </div>
+  <!-- Move script to just before </body> for best reliability -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       var debugDiv = document.getElementById('debugMessage');
@@ -403,6 +404,7 @@ async function handler(req, res) {
       if (!submitButton) { showDebug('Submit button not found!'); console.error('Submit button not found!'); return; }
       
       form.addEventListener('submit', function(e) {
+        showDebug('Form submit event triggered (handler start)');
         showDebug('Form submit event triggered');
         console.log('Form submit event triggered');
         e.preventDefault(); // Prevent page reload
