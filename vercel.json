@@ -9,6 +9,7 @@
 
 
   "routes": [
+    { "src": "/loyalty-form.js", "dest": "/loyalty-form.js" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "api/server.js" }
   ],
