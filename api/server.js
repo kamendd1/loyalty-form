@@ -392,13 +392,6 @@ async function handler(req, res) {
   }
 }
 
-// Early exit for static assets so Vercel can serve them from /public
-if (req && req.url && /\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|map)$/.test(req.url)) {
-  res.statusCode = 404;
-  res.end();
-  return;
-}
-
 // Set up Express server for local development
 if (process.env.NODE_ENV !== 'production') {
   const app = express();
@@ -415,4 +408,19 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export the handler for Vercel
-module.exports = handler;
+// Early exit for static assets so Vercel can serve them from /public
+function isStaticAsset(url) {
+  return /\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|map)$/.test(url);
+}
+
+module.exports = function(req, res) {
+  if (isStaticAsset(req.url)) {
+    res.statusCode = 404;
+    res.end();
+    return;
+  }
+  return handler(req, res);
+};
+
+// Export the original handler for local dev/testing
+handler._original = handler;
