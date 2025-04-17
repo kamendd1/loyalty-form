@@ -338,7 +338,7 @@ async function handler(req, res) {
 <body>
   <div class="container">
     <div class="form-card">
-      <div id="debugMessage" style="color: #d32f2f; font-size: 0.95rem; margin-bottom: 10px;"></div>
+      <div id="debugMessage" style="color: #d32f2f; font-size: 0.95rem; margin-bottom: 10px;">JavaScript did not run! Please contact support.</div>
       <div class="logo-container">
         <img src="https://play-lh.googleusercontent.com/-myH_Ievhf2k5S-JCRTqxJmmh_LmYgJ9rBB6L9z4aS64tKb07TkaVAszPFmXinbtJSQ=w7680-h4320-rw" alt="Company Logo" class="logo" id="companyLogo">
       </div>
@@ -356,7 +356,7 @@ async function handler(req, res) {
       </div>
       ` : ''}
       
-      <form id="loyaltyForm" onsubmit="return false;">
+      <form id="loyaltyForm">
         <div class="input-group">
           <input type="text" id="loyaltyNumber" maxlength="7" pattern="\\d*" inputmode="numeric" placeholder="">
           <p class="input-help" id="inputHelp">Enter your loyalty card number</p>
@@ -374,11 +374,14 @@ async function handler(req, res) {
   </div>
   <!-- Move script to just before </body> for best reliability -->
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    // Run immediately, do not wait for DOMContentLoaded
+    (function() {
       var debugDiv = document.getElementById('debugMessage');
       function showDebug(msg) {
         if (debugDiv) debugDiv.textContent = msg;
       }
+      // Clear fallback error if script runs
+      if (debugDiv) debugDiv.textContent = '';
       showDebug('Loyalty form script loaded');
       console.log('Loyalty form script loaded');
       // Store payload data for use in JavaScript
