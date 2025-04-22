@@ -18,6 +18,8 @@ console.log('Has JWT Secret:', !!JWT_SECRET);
 async function handler(req, res) {
   // Log request details
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  // Log the incoming URL for debugging
+  console.log('Incoming URL:', req.url);
   
   // Set CORS headers to allow all origins
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,7 +34,10 @@ async function handler(req, res) {
   }
 
   // Handle /close route for post-submission redirect
-  if (req.method === 'GET' && req.url.split('?')[0] === '/close') {
+  if (
+    req.method === 'GET' &&
+    (req.url.split('?')[0].endsWith('/close') || req.url.split('?')[0] === '/close')
+  ) {
     res.setHeader('Content-Type', 'text/html');
     res.statusCode = 200;
     res.end(`<!DOCTYPE html>
