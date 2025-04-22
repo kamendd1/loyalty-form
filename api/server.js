@@ -365,7 +365,7 @@ async function handler(req, res) {
       </div>
     </div>
   </div>
-  <script src="https://kamendd1.github.io/loyalty-form/loyalty-form.js"></script>
+  <script src="https://loyalty-form-e0fb5c.gitlab.io/loyalty-form.js"></script>
 </body>
 </html>`;
       
