@@ -30,6 +30,36 @@ async function handler(req, res) {
     res.end();
     return;
   }
+
+  // Handle /close route for post-submission redirect
+  if (req.method === 'GET' && req.url.split('?')[0] === '/close') {
+    res.setHeader('Content-Type', 'text/html');
+    res.statusCode = 200;
+    res.end(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thank You</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; }
+    .close-message { background: #fff; border-radius: 12px; padding: 32px 48px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); text-align: center; }
+    h2 { color: #00C389; margin-bottom: 16px; }
+    p { color: #333; margin-bottom: 24px; }
+    button { background: linear-gradient(90deg, #00E9A3, #00C389); color: white; border: none; border-radius: 24px; padding: 12px 32px; font-size: 1rem; cursor: pointer; }
+    button:active { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div class="close-message">
+    <h2>Thank you!</h2>
+    <p>Your loyalty card number has been submitted.<br>You may now close this window.</p>
+    <button onclick="window.close()">Close</button>
+  </div>
+</body>
+</html>`);
+    return;
+  }
   
     // Handle POST requests for loyalty card submission
   if (req.method === 'POST') {
