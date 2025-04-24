@@ -335,7 +335,7 @@ async function handler(req, res) {
     }
     .submit-button {
       width: 100%;
-      background: linear-gradient(90deg, #00E9A3, #00C389);
+      background: rgb(35, 166, 42);
       color: white;
       border: none;
       border-radius: 28px;
