@@ -16,6 +16,21 @@ console.log('Has JWT Secret:', !!JWT_SECRET);
 
 // Create a request handler function that works for both Express and serverless
 async function handler(req, res) {
+  // Enhanced logging for debugging mobile issues
+  try {
+    console.log('--- Incoming Request ---');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    if (req.method === 'GET') {
+      // Log query parameters if present
+      const urlObj = require('url').parse(req.url, true);
+      console.log('Query params:', JSON.stringify(urlObj.query, null, 2));
+    }
+  } catch (e) {
+    console.error('Error logging request details:', e);
+  }
   // Log request details
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   // Log the incoming URL for debugging
