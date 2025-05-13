@@ -21,6 +21,7 @@ async function handler(req, res) {
   // Log the incoming URL for debugging
   console.log('Incoming URL:', req.url);
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('vite secret', JWT_SECRET);
   // Set CORS headers to allow all origins
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
