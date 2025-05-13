@@ -14,7 +14,7 @@
     { "src": "/(.*)", "dest": "api/server.js" }
   ],
   "env": {
-    "JWT_SECRET": "2OX3B8tIoL1swIqN5yacTCV74037VhTgmtIsHtn3zGg=",
+    "JWT_SECRET": "0imxb5nK6jXTg/WGOmbntzUO3pMKFBPNNNbLQwrbfi8=",
     "API_BASE_URL": "https://techarch.stable.qa.charge.ampeco.tech",
     "API_TOKEN": "0a7293a4-7c5d-47ae-9cc5-0f1868fbb5cf"
   }
