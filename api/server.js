@@ -20,7 +20,7 @@ async function handler(req, res) {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   // Log the incoming URL for debugging
   console.log('Incoming URL:', req.url);
-  
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
   // Set CORS headers to allow all origins
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
