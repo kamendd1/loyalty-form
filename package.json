@@ -6,12 +6,9 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
     "server": "node api/server.js",
-    "start": "npm run build && npm run server"
+    "start": "node api/server.js"
   },
   "dependencies": {
     "buffer": "^6.0.3",
